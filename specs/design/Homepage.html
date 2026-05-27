@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-fixed": "#ffe088",
+                        primary: "#D4AF37",
+                        outline: "#99907c",
+                        "on-background": "#e2e2e2",
+                        "tertiary-fixed-dim": "#b6c7e8",
+                        "surface-tint": "#e9c349",
+                        "on-surface": "#e2e2e2",
+                        "surface-dim": "#121414",
+                        tertiary: "#becff0",
+                        "on-error": "#690005",
+                        "inverse-primary": "#735c00",
+                        "inverse-surface": "#e2e2e2",
+                        "surface-variant": "#333535",
+                        "secondary-container": "#3c4962",
+                        surface: "#121414",
+                        secondary: "#b9c7e4",
+                        "on-tertiary-fixed": "#091c35",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#d6e3ff",
+                        "on-primary-fixed": "#241a00",
+                        "surface-container-high": "#282a2b",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#574500",
+                        "inverse-on-surface": "#2f3131",
+                        "primary-container": "#d4af37",
+                        "secondary-fixed-dim": "#b9c7e4",
+                        "on-surface-variant": "#d0c5af",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-secondary-fixed-variant": "#39475f",
+                        "on-primary": "#3c2f00",
+                        error: "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#374763",
+                        "tertiary-fixed": "#d6e3ff",
+                        "on-secondary-fixed": "#0d1c32",
+                        "surface-container-highest": "#333535",
+                        "on-secondary": "#233148",
+                        "outline-variant": "#4d4635",
+                        "on-tertiary-container": "#354561",
+                        "on-secondary-container": "#abb9d6",
+                        background: "#0d1c32",
+                        "tertiary-container": "#a2b3d4",
+                        "on-tertiary": "#20314b",
+                        "surface-container": "#1e2020",
+                        "surface-bright": "#37393a",
+                        "on-primary-container": "#554300",
+                        "surface-container-low": "#1a1c1c",
+                        "surface-container-lowest": "#0c0f0f",
+                        "aegean-navy": "#0d1c32",
+                        "gold": "#D4AF37"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        "section-gap": "120px",
+                        gutter: "24px",
+                        base: "8px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px",
+                        "stack-lg": "4rem",
+                        "container-max": "1440px",
+                        "stack-sm": "1rem",
+                        "stack-md": "2rem",
+                        "margin-edge": "4rem",
+                        "stack-xl": "8rem"
+                    },
+                    fontFamily: {
+                        "label-sm": ["Noto Serif"],
+                        "headline-lg": ["Noto Serif"],
+                        "body-lg": ["Noto Serif"],
+                        "display-xl": ["Noto Serif"],
+                        "headline-md": ["Noto Serif"],
+                        "body-md": ["Noto Serif"],
+                        "label-caps": ["Inter"]
+                    },
+                    fontSize: {
+                        "label-sm": ["12px", {lineHeight: "1.4", letterSpacing: "0.1em", fontWeight: "600"}],
+                        "headline-lg": ["40px", {lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "600"}],
+                        "body-lg": ["20px", {lineHeight: "1.6", fontWeight: "400"}],
+                        "display-xl": ["64px", {lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "700"}],
+                        "headline-md": ["32px", {lineHeight: "1.3", fontWeight: "500"}],
+                        "body-md": ["16px", {lineHeight: "1.6", fontWeight: "400"}],
+                        "label-caps": ["12px", {lineHeight: "1.0", letterSpacing: "0.1em", fontWeight: "600"}]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+    </style>
+</head>
+<body class="bg-aegean-navy text-white font-body-md">
+<!-- Top Navigation Bar -->
+<div class="flex items-center p-4 pb-2 justify-between border-b border-outline-variant px-margin-mobile sticky top-0 z-[60] bg-aegean-navy">
+<!-- Left: Contact -->
+<!-- Center: Logo -->
+<div class="flex justify-center w-full">
+<a class="flex justify-center w-full" href="/">
+<img alt="YachtBay Logo" class="h-10 w-auto object-contain max-h-10" src="https://lh3.googleusercontent.com/aida/ADBb0uj7Ndo7t9vC5_IntF4Tg2enfts5-xJuQ3ro3ZkFCPEb0ufFRZcizOghiSHxymd0aQNEZcv3VYpMGIkxN88-bi0FpDYRIDtN57F7RLSPG1cJ18RU5jBNw-YhMN9QQQechQ0przzdhSIrP8iayDQTfMLTMlMeZs-EntoO4_MZoo7bygRyjaAybIs_hURt6Y4dWNsuppOhkzwQZLLfCBysszrvj72-ECh2tvfL50yukBuwlhQsvjDF6biLTsk24veA6Sk_ehNeCeYm"/>
+</a>
+</div>
+<!-- Right: Language Selection -->
+</div>
+<main class="overflow-x-hidden">
+<!-- Hero Section -->
+<section class="relative w-full aspect-[4/5] md:aspect-video flex flex-col justify-end">
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center" data-alt="A luxurious white sailing yacht gliding effortlessly through the crystalline Aegean blue waters of Greece during the golden hour." style='background-image: linear-gradient(to top, rgba(13, 28, 50, 0.9) 0%, rgba(13, 28, 50, 0) 60%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuAJ3eEBqw7L5TjgKdMJg00g2nFQy-CqyvOPaAnyo01aKez2pBJB8OkkgXqHVVv2iFeMb_78Sj_qoCB3UKn_iYR8UU2pBbMfjc810aHosrIRLx0pVxN8UlC7hkR0FDhMRytfH-rNbfUe6TgVNFphXTDPGJxkXAG3Tp6c4WzIZYfvhs37ZXTZ3D00fTprvuRq4s0KQAGiGIvPVfBKse8rsWJczLnAusPv4Z3cw2NUNx3Dd565RhCIJ3xM8tRS3wdgsl5bmZSRi7ZBJuM");'></div>
+</div>
+<div class="relative z-10 px-margin-mobile pb-24">
+<h1 class="text-white font-display-xl text-4xl mb-2">Sail Greece, your way</h1>
+<p class="text-white font-body-lg text-lg opacity-90">Browse and instantly book private yacht charters</p>
+</div>
+</section>
+<!-- Search Bar Elevated Card -->
+<section class="px-margin-mobile -mt-16 relative z-20">
+<div class="border border-outline-variant p-6 pt-10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-md bg-[rgba(255,255,255,0.04)] relative"><div class="absolute left-1/2 -translate-x-1/2 -top-[22px] z-30">
+<div class="inline-flex p-1 bg-[#1d2b45] rounded-full backdrop-blur-md border border-white/10 shadow-lg">
+<button class="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all bg-gold text-[#1a0f00] shadow-sm">
+            Rental
+        </button>
+<button class="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all text-white hover:bg-white/5">DAILY</button>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex flex-col gap-1 border-b border-outline-variant pb-2">
+<label class="text-white text-[10px] uppercase tracking-wider font-bold">Location</label>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold text-sm">location_on</span>
+<input class="w-full bg-transparent border-none p-0 focus:ring-0 text-white font-body-md placeholder:text-outline text-base" placeholder="Where are you sailing?" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1 border-b border-outline-variant pb-2">
+<label class="text-white text-[10px] uppercase tracking-wider font-bold">Check-in</label>
+<input class="bg-transparent border-none p-0 focus:ring-0 text-white font-label-sm text-sm" type="date"/>
+</div>
+<div class="flex flex-col gap-1 border-b border-outline-variant pb-2">
+<label class="text-white text-[10px] uppercase tracking-wider font-bold">Check-out</label>
+<input class="bg-transparent border-none p-0 focus:ring-0 text-white font-label-sm text-sm" type="date"/>
+</div>
+</div>
+<div class="flex flex-col gap-1 border-b border-outline-variant pb-2">
+<label class="text-white text-[10px] uppercase tracking-wider font-bold">Guests</label>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold text-sm">group</span>
+<input class="w-full bg-transparent border-none p-0 focus:ring-0 text-white font-body-md placeholder:text-outline text-base" placeholder="Number of guests" type="number"/>
+</div>
+</div>
+<button class="w-full bg-gold text-on-primary py-4 font-label-sm uppercase text-sm rounded-lg tracking-widest hover:brightness-110 transition-all font-bold">
+                        Search
+                    </button>
+</div>
+</div>
+</section>
+<!-- Featured Listings -->
+<section class="py-16">
+<div class="px-margin-mobile flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline-md text-2xl text-white">Popular Destinations</h2>
+<p class="text-white text-sm">Handpicked locales for your next voyage</p>
+</div>
+</div>
+<div class="relative pb-8">
+<div class="flex overflow-x-auto gap-4 px-6 no-scrollbar snap-x snap-mandatory scroll-px-6">
+<!-- Mykonos Card -->
+<div class="min-w-[85%] h-[400px] snap-center relative rounded-2xl overflow-hidden shadow-lg flex-shrink-0 border border-outline-variant/30">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBOWODE6HWESNN4kU0Ab8c_vQjjMhZ3OjhZQx4lsYd9FKPwcbDJ4UINaLSvFw13TYiB4LFP1O55fWej61ba0h9lkOLkG_hFpEIhZyfloRKSJKUq3lzcE4qZRP8BBbOQcIFIUxkxVRebSPcDz5Wpq5WAk0kEKY2XKMazJidgF2C99_xt6moM1rBvtwHP6CUkX27dCcwZwwz_TX6U3gnD2gKCIcxdv7NoiKEJZImaY5u71B1aZn2DPKuWoj4tEJND8WuhmhBLzduoIK4");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-aegean-navy via-aegean-navy/20 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<span class="bg-aegean-navy/40 backdrop-blur-md border border-outline/30 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Best Seller</span>
+</div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-headline-lg text-2xl mb-1 text-gold">Mykonos</h3>
+<p class="text-sm text-white">From <span class="font-bold font-body-md text-white">€350</span> / day</p>
+</div>
+</div>
+<!-- Santorini Card -->
+<div class="min-w-[85%] h-[400px] snap-center relative rounded-2xl overflow-hidden shadow-lg flex-shrink-0 border border-outline-variant/30">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBFi4Y0La-PemOOW2SdKSR5BPRgVi9jBJ_sVCq0b4q9mSKYppeOcWeSxEICG5UuyuY1a1YczT94nBW4k3jdeIy2NmXSgTYxZWONv_jiaypUSL810vhCutRZzcxXHVoq9aTktCSIilvo1VXYUvf-HScswEeV_EudQAREC9GjfeZqh5CaJNXS5rv6djSldemZ2cj8G_o1cAzDE1Oqn2QCA9hvZWqZwTQXJPbuHB1Hpzluhk0-dVxs3IxdPna4V2JCIbQdJU2g_hBQ6nw");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-aegean-navy via-aegean-navy/20 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<span class="bg-aegean-navy/40 backdrop-blur-md border border-outline/30 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Exclusive</span>
+</div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-headline-lg text-2xl mb-1 text-gold">Santorini</h3>
+<p class="text-sm text-white">From <span class="font-bold font-body-md text-white">€420</span> / day</p>
+</div>
+</div>
+<!-- Crete Card -->
+<div class="min-w-[85%] h-[400px] snap-center relative rounded-2xl overflow-hidden shadow-lg flex-shrink-0 border border-outline-variant/30">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCHg-R2_qCarZRnoXvkzYChf29f_KFyGKX9FUIm-1z77a7vmMYo8zHkAL6lv8vJfkXEE7SnIMMFDOPgONgPuI55mXS798AABi-Z06zSFuEjD0XWDZlZVsTY0XaSqrgsL6D_lEclFEIB5ecB9zX9Kr68ZjkPixcIbs6nMWehBmHrbHj8pLaEPGt5hHAJ5uaoe4ZJUgANM3RBp-Q57S_K2ybAmLNZC2TJO5YQamaOVzwv5jvBcixXVMSlw_KMUqvk2dGCVcC0--vJJLU");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-aegean-navy via-aegean-navy/20 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<span class="bg-aegean-navy/40 backdrop-blur-md border border-outline/30 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Economy</span>
+</div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-headline-lg text-2xl mb-1 text-gold">Crete</h3>
+<p class="text-sm text-white">From <span class="font-bold font-body-md text-white">€280</span> / day</p>
+</div>
+</div>
+</div>
+<!-- Carousel Navigation Dots -->
+<div class="flex justify-center gap-2 mt-6">
+<div class="w-2 h-2 rounded-full bg-outline/30"></div>
+<div class="w-6 h-2 rounded-full bg-gold"></div>
+<div class="w-2 h-2 rounded-full bg-outline/30"></div>
+<div class="w-2 h-2 rounded-full bg-outline/30"></div>
+<div class="w-2 h-2 rounded-full bg-outline/30"></div>
+</div>
+</div>
+</section>
+<!-- How it Works -->
+<section class="py-16 px-margin-mobile border-y border-outline-variant/30">
+<h2 class="font-headline-lg text-center text-white mb-8">How it Works</h2>
+<div class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+<div class="bg-white/5 p-5 rounded-2xl border border-outline-variant/50 flex flex-col items-center text-center shadow-sm">
+<div class="flex items-center justify-center mb-3 text-gold">
+<span class="material-symbols-outlined text-2xl">travel_explore</span>
+</div>
+<h3 class="font-body-md text-white mb-1 text-sm font-semibold">Browse</h3>
+<p class="text-white text-[12px] leading-relaxed">Curated premium yachts in the Med.</p>
+</div>
+<div class="bg-white/5 p-5 rounded-2xl border border-outline-variant/50 flex flex-col items-center text-center shadow-sm">
+<div class="flex items-center justify-center mb-3 text-gold">
+<span class="material-symbols-outlined text-2xl">event_available</span>
+</div>
+<h3 class="font-body-md text-white mb-1 text-sm font-semibold">Book</h3>
+<p class="text-white text-[12px] leading-relaxed">Secure dates with transparent pricing.</p>
+</div>
+<div class="bg-white/5 p-5 rounded-2xl border border-outline-variant/50 flex flex-col items-center text-center shadow-sm">
+<div class="flex items-center justify-center mb-3 text-gold">
+<span class="material-symbols-outlined text-2xl">sailing</span>
+</div>
+<h3 class="font-body-md text-white mb-1 text-sm font-semibold">Sail</h3>
+<p class="text-white text-[12px] leading-relaxed">Embark from partner marinas.</p>
+</div>
+<div class="bg-white/5 p-5 rounded-2xl border border-outline-variant/50 flex flex-col items-center text-center shadow-sm">
+<div class="flex items-center justify-center mb-3 text-gold">
+<span class="material-symbols-outlined text-2xl">verified</span>
+</div>
+<h3 class="font-body-md text-white mb-1 text-sm font-semibold">Review</h3>
+<p class="text-white text-[12px] leading-relaxed">Book with verified community trust.</p>
+</div>
+</div>
+</section>
+<!-- Our Fleet -->
+<section class="py-16">
+<div class="px-margin-mobile flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline-md text-2xl text-white">Our Fleet</h2>
+<p class="text-white text-sm">Find the perfect vessel for your journey</p>
+</div>
+</div>
+<div class="relative pb-8">
+<div class="flex overflow-x-auto gap-4 px-6 no-scrollbar snap-x snap-mandatory scroll-px-6">
+<div class="min-w-[85%] h-[400px] snap-center relative rounded-2xl overflow-hidden shadow-lg flex-shrink-0 border border-outline-variant/30">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAJ3eEBqw7L5TjgKdMJg00g2nFQy-CqyvOPaAnyo01aKez2pBJB8OkkgXqHVVv2iFeMb_78Sj_qoCB3UKn_iYR8UU2pBbMfjc810aHosrIRLx0pVxN8UlC7hkR0FDhMRytfH-rNbfUe6TgVNFphXTDPGJxkXAG3Tp6c4WzIZYfvhs37ZXTZ3D00fTprvuRq4s0KQAGiGIvPVfBKse8rsWJczLnAusPv4Z3cw2NUNx3Dd565RhCIJ3xM8tRS3wdgsl5bmZSRi7ZBJuM");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-aegean-navy via-aegean-navy/30 to-transparent"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-headline-lg text-2xl mb-1 text-gold">Sailboats</h3>
+<p class="text-sm text-white">From <span class="font-bold font-body-md text-white">€350</span> / day</p>
+</div>
+</div>
+<div class="min-w-[85%] h-[400px] snap-center relative rounded-2xl overflow-hidden shadow-lg flex-shrink-0 border border-outline-variant/30">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBFi4Y0La-PemOOW2SdKSR5BPRgVi9jBJ_sVCq0b4q9mSKYppeOcWeSxEICG5UuyuY1a1YczT94nBW4k3jdeIy2NmXSgTYxZWONv_jiaypUSL810vhCutRZzcxXHVoq9aTktCSIilvo1VXYUvf-HScswEeV_EudQAREC9GjfeZqh5CaJNXS5rv6djSldemZ2cj8G_o1cAzDE1Oqn2QCA9hvZWqZwTQXJPbuHB1Hpzluhk0-dVxs3IxdPna4V2JCIbQdJU2g_hBQ6nw");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-aegean-navy via-aegean-navy/30 to-transparent"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-headline-lg text-2xl mb-1 text-gold">Catamarans</h3>
+<p class="text-sm text-white">From <span class="font-bold font-body-md text-white">€600</span> / day</p>
+</div>
+</div>
+<div class="min-w-[85%] h-[400px] snap-center relative rounded-2xl overflow-hidden shadow-lg flex-shrink-0 border border-outline-variant/30">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDtneQTjzsOJlAkGUEcI4v6tmseEVETp4rMOcV5PdqEj4rvZkyLKcF_G139BKuldMYA63CPmqnACTWN2AqulltwdU5nlLXuDTKJltCbp8hk_WwtIPZkMBBhOnQAJY4uA4fN9Jl5I_33zOygdqVOIMKKIfaggXC7JVm9x-zBVCudfXaRyShABL02CU-2Dmk2pCJAmztYdO1h9OAM3gckucdDSe_bnlhXbQYYYxTz0YBquvczShn5CN65mExjIzHk2TftYSRAW0hFHjU");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-aegean-navy via-aegean-navy/30 to-transparent"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-headline-lg text-2xl mb-1 text-gold">Motor Yachts</h3>
+<p class="text-sm text-white">From <span class="font-bold font-body-md text-white">€850</span> / day</p>
+</div>
+</div>
+<div class="min-w-[85%] h-[400px] snap-center relative rounded-2xl overflow-hidden shadow-lg flex-shrink-0 border border-outline-variant/30">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCHg-R2_qCarZRnoXvkzYChf29f_KFyGKX9FUIm-1z77a7vmMYo8zHkAL6lv8vJfkXEE7SnIMMFDOPgONgPuI55mXS798AABi-Z06zSFuEjD0XWDZlZVsTY0XaSqrgsL6D_lEclFEIB5ecB9zX9Kr68ZjkPixcIbs6nMWehBmHrbHj8pLaEPGt5hHAJ5uaoe4ZJUgANM3RBp-Q57S_K2ybAmLNZC2TJO5YQamaOVzwv5jvBcixXVMSlw_KMUqvk2dGCVcC0--vJJLU");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-aegean-navy via-aegean-navy/30 to-transparent"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="font-headline-lg text-2xl mb-1 text-gold">Luxury Gulets</h3>
+<p class="text-sm text-white">From <span class="font-bold font-body-md text-white">€1,200</span> / day</p>
+</div>
+</div>
+</div>
+<div class="flex justify-center gap-2 mt-6">
+<div class="w-6 h-2 rounded-full bg-gold"></div>
+<div class="w-2 h-2 rounded-full bg-outline/30"></div>
+<div class="w-2 h-2 rounded-full bg-outline/30"></div>
+<div class="w-2 h-2 rounded-full bg-outline/30"></div>
+</div>
+</div>
+</section>
+<!-- Owner CTA -->
+<section class="py-16">
+<div class="bg-white/5 border border-outline-variant/20 p-8 relative overflow-hidden text-center shadow-xl p-10 md:p-16 px-margin-mobile">
+<div class="relative z-10 max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+<div class="text-center md:text-left space-y-4">
+<h2 class="font-headline-lg text-3xl text-white">Own a yacht?</h2>
+<p class="text-white font-body-md max-w-md opacity-90">
+                            Join our exclusive fleet and start earning with YachtBay's premium management platform. We handle the logistics, you enjoy the returns.
+                        </p>
+</div>
+<div class="shrink-0 w-full md:w-auto">
+<button class="w-full md:w-auto bg-gold text-on-primary px-10 py-4 font-label-sm uppercase text-sm tracking-[0.1em] rounded-lg shadow-lg hover:brightness-110 transition-all duration-300 font-bold">
+                            List your boat
+                        </button>
+</div>
+</div>
+<div class="absolute bottom-0 right-0 w-64 h-64 bg-gold/5 rounded-full -mb-32 -mr-32 blur-3xl"></div>
+<div class="absolute top-0 left-0 w-48 h-48 bg-tertiary/5 rounded-full -mt-24 -ml-24 blur-3xl"></div>
+</div>
+</section>
+</main>
+<!-- Follow Our Journey Section -->
+<section class="border-t border-outline-variant py-8 px-margin-mobile bg-aegean-navy">
+<div class="max-w-6xl mx-auto flex flex-col items-center gap-4">
+<h3 class="font-body-md text-gold text-xs uppercase tracking-[0.2em]">Follow Our Journey</h3>
+<div class="flex gap-8">
+<a aria-label="Instagram" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-gold hover:text-on-primary transition-all duration-300 shadow-sm" href="#">
+<span class="material-symbols-outlined">photo_camera</span>
+</a>
+<a aria-label="Facebook" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-gold hover:text-on-primary transition-all duration-300 shadow-sm" href="#">
+<span class="material-symbols-outlined">facebook</span>
+</a>
+<a aria-label="X" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-gold hover:text-on-primary transition-all duration-300 shadow-sm" href="#">
+<span class="material-symbols-outlined">close</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Main Footer -->
+<footer class="text-white py-12 px-margin-mobile border-t border-outline-variant/30 bg-aegean-navy">
+<div class="max-w-6xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
+<div class="space-y-4 max-w-md">
+<h2 class="text-2xl font-headline-lg font-bold tracking-tight text-gold">YachtBay</h2>
+<div class="text-xs text-white font-label-sm mt-6 space-y-4">
+<p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">mail</span> contact@yachtbay.com</p>
+<p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">description</span> Registration No: GR-123456789</p>
+<p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">call</span> +30 210 123 4567</p>
+<p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">location_on</span> Marina Zeas, Piraeus 185 36, Greece</p>
+</div>
+</div>
+<div class="bg-white/5 border border-outline-variant/30 p-6 rounded-xl md:w-80">
+<h3 class="font-body-md text-sm mb-3 text-white">Newsletter</h3>
+<p class="text-xs text-white mb-4">Stay updated on exclusive Mediterranean deals.</p>
+<div class="flex gap-2">
+<input class="bg-transparent border border-outline-variant/50 rounded-lg text-xs w-full focus:ring-gold focus:border-gold py-2 text-white placeholder-outline" placeholder="Email" type="email"/>
+<button class="bg-gold text-on-primary px-4 py-2 rounded-lg text-xs font-bold hover:brightness-110 transition-all">Join</button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-8 border-t border-outline-variant/30 pt-8">
+<!-- For Renters -->
+<div class="border-b border-outline-variant/30 md:border-b-0">
+<details class="group md:hidden">
+<summary class="flex items-center justify-between py-4 cursor-pointer list-none"><span class="font-label-sm uppercase text-gold">FOR RENTERS</span><span class="material-symbols-outlined text-[16px] transition-transform group-open:rotate-180 text-gold">expand_more</span></summary>
+<ul class="space-y-4 pb-6 px-2 text-sm font-label-sm text-white">
+<li class=""><a class="hover:text-gold transition-colors" href="#">How it works</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Browse yachts</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Cancellation policy</a></li>
+</ul>
+</details>
+<div class="hidden md:block space-y-4">
+<h3 class="font-body-md uppercase text-xs tracking-widest text-gold">For Renters</h3>
+<ul class="space-y-2 text-sm font-label-sm text-white">
+<li class=""><a class="hover:text-gold transition-colors" href="#">How it works</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Browse yachts</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Cancellation policy</a></li>
+</ul>
+</div>
+</div>
+<!-- For Owners -->
+<div class="border-b border-outline-variant/30 md:border-b-0">
+<details class="group md:hidden">
+<summary class="flex items-center justify-between py-4 cursor-pointer list-none"><span class="font-label-sm uppercase text-gold">FOR OWNERS</span><span class="material-symbols-outlined text-[16px] transition-transform group-open:rotate-180 text-gold">expand_more</span></summary>
+<ul class="space-y-4 pb-6 px-2 text-sm font-label-sm text-white">
+<li class=""><a class="hover:text-gold transition-colors" href="#">List your yacht</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Owner FAQ</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Insurance coverage</a></li>
+</ul>
+</details>
+<div class="hidden md:block space-y-4">
+<h3 class="font-body-md uppercase text-xs tracking-widest text-gold">For Owners</h3>
+<ul class="space-y-2 text-sm font-label-sm text-white">
+<li class=""><a class="hover:text-gold transition-colors" href="#">List your yacht</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Owner FAQ</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Insurance coverage</a></li>
+</ul>
+</div>
+</div>
+<!-- Legal -->
+<div class="md:border-b-0">
+<details class="group md:hidden">
+<summary class="flex items-center justify-between py-4 cursor-pointer list-none"><span class="font-label-sm uppercase text-gold">LEGAL</span><span class="material-symbols-outlined text-[16px] transition-transform group-open:rotate-180 text-gold">expand_more</span></summary>
+<ul class="space-y-4 pb-6 px-2 text-sm font-label-sm text-white">
+<li class=""><a class="hover:text-gold transition-colors" href="#">Terms of service</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Privacy policy</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Cookie settings</a></li>
+</ul>
+</details>
+<div class="hidden md:block space-y-4">
+<h3 class="font-body-md uppercase text-xs tracking-widest text-gold">Legal</h3>
+<ul class="space-y-2 text-sm font-label-sm text-white">
+<li class=""><a class="hover:text-gold transition-colors" href="#">Terms of service</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Privacy policy</a></li>
+<li class=""><a class="hover:text-gold transition-colors" href="#">Cookie settings</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="max-w-6xl mx-auto mt-12 pt-8 border-t border-outline-variant/30 text-center">
+<p class="text-[10px] uppercase tracking-[0.2em] text-white font-label-sm">
+                    © 2024 YachtBay International. All rights reserved.
+                </p>
+</div>
+</div>
+</footer>
+<!-- Bottom Tab Navigation -->
+<footer class="sticky bottom-0 z-50 bg-aegean-navy border-t border-outline-variant pb-safe">
+<div class="flex gap-2 px-4 pb-3 pt-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-gold" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>explore</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Explore</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#94a3b8] hover:text-gold transition-colors" href="#">
+<div class="flex h-8 items-center justify-center"><span class="material-symbols-outlined">language</span></div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">EN</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#94a3b8] hover:text-gold transition-colors" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">mail</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Contact</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#94a3b8] hover:text-gold transition-colors" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+</div>
+</footer>
+</body></html>

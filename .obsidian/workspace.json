@@ -1,0 +1,221 @@
+{
+  "main": {
+    "id": "31a550363ec467e4",
+    "type": "split",
+    "children": [
+      {
+        "id": "0222dcea9f371cd5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "971d53e79adccf4e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "specs/backend-architecture.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "backend-architecture"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "277a2ab372ad1f28",
+    "type": "split",
+    "children": [
+      {
+        "id": "4af5d22e8f46fc99",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9afff7327e227fe5",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "ae440e2b6c01d2a0",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "9726f0752d32ac44",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "909b9d948e1714f0",
+    "type": "split",
+    "children": [
+      {
+        "id": "29e54b0cb53ee741",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fa92dd9fe819a69e",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "specs/api-contract.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for api-contract"
+            }
+          },
+          {
+            "id": "70acb1bb449a35cb",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "specs/api-contract.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from api-contract"
+            }
+          },
+          {
+            "id": "0cd1e90ca3e65c5f",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "d0fcbeeb85e19ba0",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "3276b2b6066cdf09",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "specs/api-contract.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of api-contract"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "971d53e79adccf4e",
+  "lastOpenFiles": [
+    "decisions/2026-05-01-platform-name-yachtbay.md",
+    "decisions/2026-05-01-instant-booking.md",
+    "decisions/2026-05-01-greece-first-launch.md",
+    "decisions/2026-05-01-commission-from-owners.md",
+    "specs/design/stitch-brief.md",
+    "specs/design/DESIGN.md",
+    "specs/api-contract.md",
+    "specs/mvp-scope.md",
+    "specs/data-model.md",
+    "specs/backend-architecture.md",
+    "specs/design/stitch-yacht-detail-edit-prompts.md",
+    "specs/design/Homepage.html",
+    "specs/design/Homepage.tsx",
+    "specs/design/homepage.html",
+    "specs/design/stitch-recreation-prompts.md",
+    "specs/design/sitemap-owner-panel.md",
+    "roadmap/phase-1-development.md",
+    "Claude.md",
+    "specs/env-variables.md",
+    "specs/design/sitemap-storefront.md",
+    "specs/design/sitemap-admin.md",
+    "specs/user-stories/owner.md",
+    "specs/design",
+    "specs/user-stories/admin.md",
+    "specs/user-stories/renter.md",
+    "wiki/entities/sailogy.md",
+    "specs/user-stories",
+    "decisions/2026-05-03-frontend-monorepo.md",
+    "wiki/entities/getmyboat.md",
+    "wiki/entities/clickandboat.md",
+    "wiki/entities/boataround.md",
+    "raw/yacht-booking-system-summary.docx"
+  ]
+}
