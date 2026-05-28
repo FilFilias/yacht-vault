@@ -529,8 +529,8 @@ crewOption   CrewOption (required)
 **Response `200`**:
 ```json
 {
-  "uploadUrl": "string (pre-signed R2 URL, expires in 10 min)",
-  "r2Key": "string",
+  "uploadUrl": "string (pre-signed S3-compatible URL, expires in 10 min)",
+  "storageKey": "string",
   "publicUrl": "string"
 }
 ```
@@ -543,7 +543,7 @@ crewOption   CrewOption (required)
 **Request body**:
 ```json
 {
-  "r2Key": "string",
+  "storageKey": "string",
   "url": "string",
   "isCover": "boolean (optional, default false)"
 }

@@ -258,8 +258,8 @@ model YachtPhoto {
   id           String   @id @default(cuid())
   yachtId      String
   yacht        Yacht    @relation(fields: [yachtId], references: [id], onDelete: Cascade)
-  r2Key        String   // Cloudflare R2 object key (used for deletion)
-  url          String   // Cloudflare CDN public URL (used for display)
+  storageKey   String   // S3-compatible object key, provider-neutral (R2 today; used for deletion)
+  url          String   // CDN public URL (used for display)
   displayOrder Int      // 0 = cover/primary photo
   isCover      Boolean  @default(false)
   createdAt    DateTime @default(now())

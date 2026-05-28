@@ -141,8 +141,8 @@ As an owner, I want to upload photos of my yacht, so that renters can see what t
 - [ ] Accepted formats: JPG, PNG, WebP. Max size: 10MB per photo
 
 #### Technical Requirements
-**Entities**: `yacht_photos` (yacht_id, r2_key, display_order)
-**Endpoints**: `POST /api/v1/yachts/:id/photos/upload-url` (returns pre-signed R2 URL), `POST /api/v1/yachts/:id/photos` (register uploaded photo), `DELETE /api/v1/yachts/:id/photos/:photoId`, `PATCH /api/v1/yachts/:id/photos/reorder`
+**Entities**: `yacht_photos` (yacht_id, storage_key, display_order)
+**Endpoints**: `POST /api/v1/yachts/:id/photos/upload-url` (returns pre-signed S3-compatible URL), `POST /api/v1/yachts/:id/photos` (register uploaded photo), `DELETE /api/v1/yachts/:id/photos/:photoId`, `PATCH /api/v1/yachts/:id/photos/reorder`
 **Business rules**: Photos uploaded directly to R2 via pre-signed URL — never transit the backend server. Backend stores the R2 object key and Cloudflare CDN URL.
 **Notes**: Resize/compress client-side before upload (browser Canvas API or a library like `browser-image-compression`) since R2 has no built-in transformation.
 
