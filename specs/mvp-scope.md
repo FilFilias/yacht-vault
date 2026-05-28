@@ -3,7 +3,7 @@ title: MVP Scope
 tags:
   - spec
 status: draft
-last-updated: 2026-05-02
+last-updated: 2026-05-27
 ---
 
 # MVP Scope
@@ -115,11 +115,14 @@ Owner creates listing → Renter searches & compares → Renter instant-books �
 - [ ] Booking reminder (renter, 48h before charter)
 
 ### Admin Panel (internal)
-- [ ] View all bookings
-- [ ] View all owners and listings
-- [ ] View all renters
-- [ ] Manually trigger payouts if needed
-- [ ] Basic revenue reporting (total bookings, total commission earned)
+Reduced scope for soft launch — 4 endpoints only. Full admin panel deferred to post-traction.
+
+- [ ] `GET /admin/users` — list/search users
+- [ ] `PATCH /admin/users/:id/suspend` — emergency user suspension
+- [ ] `GET /admin/bookings` — list all platform bookings
+- [ ] `POST /admin/bookings/:id/refund` — issue manual refund
+
+See [[decisions/2026-05-27-minimal-admin-mvp]].
 
 ---
 
@@ -138,6 +141,9 @@ Owner creates listing → Renter searches & compares → Renter instant-books �
 | Promotional / discount tools | Phase 2 |
 | Multi-language support | English only at MVP |
 | Multi-currency | EUR only at MVP |
+| Full admin panel (revenue, settings, per-owner commission UI) | Soft launch needs only user suspension and manual refund — schema fields already in place |
+| Transactional outbox | Schema table exists, preserved for future option; poller deferred until reliability evidence warrants ~1 day of work |
+| Async email/host/audit queues | Emails sent synchronously via EmailPort (Resend) with try-catch. BullMQ used for payout scheduling only |
 
 ---
 

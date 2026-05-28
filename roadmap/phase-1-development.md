@@ -3,7 +3,7 @@ title: Phase 1 — Development Roadmap
 tags:
   - roadmap
   - development
-last-updated: 2026-05-05
+last-updated: 2026-05-27
 ---
 
 # Phase 1 — Development Roadmap (MVP)
@@ -20,8 +20,6 @@ last-updated: 2026-05-05
 ### Backend
 - [ ] NestJS project initialized with Fastify adapter
 - [ ] Prisma configured, PostgreSQL connected, first migration run (full schema from [[specs/data-model]])
-- [ ] PostGIS extension enabled
-- [ ] Redis connected, BullMQ configured (no workers yet — just the connection)
 - [ ] Global pipes (ValidationPipe), guards, and error filter wired up
 - [ ] Auth module: `register`, `verify-email`, `login`, `refresh`, `logout`, `forgot-password`, `reset-password`
 - [ ] Users module: `GET /users/me`, `PATCH /users/me`, `add-owner-role`
@@ -39,7 +37,7 @@ last-updated: 2026-05-05
 ### Infrastructure
 - [ ] GitHub repo created, monorepo pushed
 - [ ] Railway: 3 services created (backend, storefront, owner-panel)
-- [ ] Railway: PostgreSQL + Redis provisioned and connected to backend
+- [ ] Railway: PostgreSQL provisioned and connected to backend (Redis deferred to Milestone 4 — see [[decisions/2026-05-27-scoped-bullmq-usage]])
 - [ ] GitHub Actions: CI workflow (typecheck + lint on PR)
 - [ ] GitHub Actions: deploy to Railway on push to `main`
 - [ ] Domains configured: `api.yachtbay.com`, `yachtbay.com`, `owners.yachtbay.com`
@@ -83,7 +81,7 @@ last-updated: 2026-05-05
 ### Backend
 - [ ] Availability module: `GET /yachts/:id/availability`, `POST /yachts/:id/availability/block`, `DELETE /yachts/:id/availability/block`
 - [ ] PREP day auto-blocking on booking confirmation (written now, triggered in Milestone 4)
-- [ ] Search module: `GET /yachts` with PostGIS geo filter, date availability join, crew option filter, price filter, sort
+- [ ] Search module: `GET /yachts` with haversine geo filter (`$queryRaw`), date availability join, crew option filter, price filter, sort
 - [ ] `GET /yachts/:id/pricing` — PricingEngine with `BasePriceStrategy`, `WeeklyRateStrategy`, `CrewOptionStrategy`
 
 ### Frontend (Storefront)
@@ -106,13 +104,13 @@ last-updated: 2026-05-05
 ### Backend
 - [ ] Stripe Connect module: `POST /stripe/connect/onboard`, `GET /stripe/connect/status`, `GET /stripe/connect/dashboard-link`
 - [ ] Stripe webhook handler: `account.updated` → updates `stripe_account_status` on user
-- [ ] BullMQ workers: email-queue, payment-queue, host-queue, audit-queue
-- [ ] Transactional outbox poller (`@nestjs/schedule` — polls every 2s)
+- [ ] Redis + BullMQ provisioned (payout queue only)
+- [ ] BullMQ worker: payout-queue (delayed job for owner payout release 24–48h after charter start)
 - [ ] Resend adapter wired up (`ResendAdapter` implementing `EmailPort`)
-- [ ] Bookings module: `POST /bookings` (full CreateBookingCommand — `SELECT FOR UPDATE`, pricing, payment, outbox event)
+- [ ] Bookings module: `POST /bookings` (CreateBookingCommand — `SELECT FOR UPDATE`, pricing, synchronous Stripe capture inside transaction, emailPort.send() post-commit)
 - [ ] Bookings module: `GET /bookings`, `GET /bookings/:id`
-- [ ] Stripe webhook handler: `payment_intent.succeeded` → booking confirmed, outbox event delivered
-- [ ] Confirmation emails: renter confirmation + owner notification (Resend templates)
+- [ ] Stripe webhook handler: `payment_intent.payment_failed`, `account.updated`, `charge.refunded` (secondary path)
+- [ ] Confirmation emails: renter + owner (Resend templates, sent synchronously post-commit)
 
 ### Frontend (Storefront)
 - [ ] `/yachts/:id/checkout` — booking summary page
@@ -137,9 +135,9 @@ last-updated: 2026-05-05
 - [ ] Bookings module: `PATCH /bookings/:id/cancel` — refund calculation + Stripe refund + availability release
 - [ ] Bookings module: `PATCH /bookings/:id/check-in`, `PATCH /bookings/:id/complete`
 - [ ] Payments module: `GET /payments` (owner payout history)
-- [ ] Payout scheduler: auto-release 24–48h after charter start (`@nestjs/schedule`)
-- [ ] Cancellation emails: renter + owner notification on cancellation
-- [ ] Completion emails: owner + renter notification on completion
+- [ ] Check-in handler enqueues payout-queue delayed job (set up in M4 — no new infrastructure)
+- [ ] Cancellation emails: renter + owner via emailPort.send() (synchronous post-commit)
+- [ ] Completion emails: owner + renter via emailPort.send() (synchronous post-commit)
 
 ### Frontend (Storefront)
 - [ ] `/bookings` — renter bookings dashboard (Upcoming / Past / Cancelled tabs)
@@ -162,25 +160,21 @@ last-updated: 2026-05-05
 *Goal: Admin panel operational, platform manageable without code deploys*
 
 ### Backend
-- [ ] Admin module: all endpoints from [[specs/api-contract]] §8
-  - Users: list, detail, suspend, reactivate, set commission rate
-  - Listings: list, detail, pause, delete
-  - Bookings: list, detail, trigger payout, issue refund
-  - Revenue: summary + monthly breakdown
-  - Settings: GET + PATCH (commission rate, cancellation policy thresholds)
+- [ ] Admin module: 4 MVP endpoints from [[specs/api-contract]] §8 (Phase 1)
+  - `GET /admin/users` — list/search users
+  - `PATCH /admin/users/:id/suspend` — emergency suspension
+  - `GET /admin/bookings` — list all bookings
+  - `POST /admin/bookings/:id/refund` — issue manual refund
 
 ### Frontend (Admin Panel)
 - [ ] Admin panel: React Router 7 SPA initialized, sidebar layout
 - [ ] `/login` — admin login
-- [ ] `/dashboard` — platform overview + alerts panel
-- [ ] `/users` + `/users/:id` — user management with suspend/reactivate/commission
-- [ ] `/listings` + `/listings/:id` — listing management with pause/delete
-- [ ] `/bookings` + `/bookings/:id` — booking management with manual payout + refund
-- [ ] `/revenue` — commission dashboard
-- [ ] `/settings` — commission rate + cancellation policy editor
+- [ ] `/dashboard` — platform overview (stats tiles + recent activity)
+- [ ] `/users` — user list with search + suspend action
+- [ ] `/bookings` — booking list with manual refund action
 
 ### ✅ Milestone 6 checkpoint
-> Admin can manage all platform entities. Commission rates adjustable per owner. Manual payout and refund tools work. Revenue dashboard shows accurate figures.
+> Admin can view all users, suspend a user, view all bookings, and issue a manual refund. Full admin panel (revenue, settings, commission management) deferred to post-traction.
 
 ---
 

@@ -5,7 +5,7 @@ tags:
   - technical
   - infrastructure
 status: approved
-last-updated: 2026-05-05
+last-updated: 2026-05-27
 ---
 
 # Environment Variables
@@ -22,6 +22,7 @@ last-updated: 2026-05-05
 DATABASE_URL="postgresql://user:password@host:5432/yachtbay?schema=public"
 
 # Redis connection string (Railway provides this automatically)
+# Required from Milestone 4 onward (payout scheduling). Not needed for Milestones 1–3.
 REDIS_URL="redis://localhost:6379"
 ```
 
@@ -106,10 +107,14 @@ PLATFORM_COMMISSION_RATE=13
 
 ### BullMQ (Queue names — optional overrides)
 ```env
-QUEUE_EMAIL="email-queue"
-QUEUE_PAYMENT="payment-queue"
-QUEUE_HOST="host-queue"
-QUEUE_AUDIT="audit-queue"
+# Active at MVP (Milestone 4+)
+QUEUE_PAYOUT="payout-queue"
+
+# Phase 2 / scale — add when evidence warrants
+# QUEUE_EMAIL="email-queue"
+# QUEUE_PAYMENT="payment-queue"
+# QUEUE_HOST="host-queue"
+# QUEUE_AUDIT="audit-queue"
 ```
 
 ---

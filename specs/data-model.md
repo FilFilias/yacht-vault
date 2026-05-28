@@ -6,7 +6,7 @@ tags:
   - data-model
   - backend
 status: approved
-last-updated: 2026-05-05
+last-updated: 2026-05-27
 ---
 
 # Data Model — Final Prisma Schema
@@ -79,14 +79,12 @@ The following gaps were found during the user story audit:
 
 ```prisma
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [postgis]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ─── ENUMS ────────────────────────────────────────────────────────────────────
@@ -226,7 +224,8 @@ model Yacht {
   manufacturer String?
   model        String?
   homePort     String
-  location     Unsupported("geometry(Point, 4326)")? // PostGIS point
+  locationLat  Float?  // stored as decimal degrees, used in haversine geo search
+  locationLng  Float?
   description  String    @db.Text
 
   // Pricing
@@ -452,8 +451,8 @@ INDEX ON yacht_photos (yacht_id, display_order)
 INDEX ON pricing_rules (yacht_id, active)
 INDEX ON pricing_rules (rule_type, active)
 
--- Geo search (PostGIS)
-GIST INDEX ON yachts (location)
+-- Geo search (haversine — B-tree composite)
+INDEX ON yachts (status, location_lat, location_lng)
 
 -- Listings by owner
 INDEX ON yachts (owner_id)
@@ -472,6 +471,9 @@ INDEX ON yachts (status)
 
 ### Charter types as Json
 `charterTypes: {day_trip: bool, multi_day: bool, weekly: bool}` on the yacht. The minimum charter duration (`minCharterDays`) enforces the day-count constraint at booking time.
+
+### Location as lat/lng floats (not PostGIS)
+`locationLat Float?` + `locationLng Float?` replace what would have been a `Unsupported("geometry(Point, 4326)")` PostGIS column. Geo search uses `$queryRaw` with a haversine formula and a B-tree composite index on `(status, location_lat, location_lng)`. At Greece-only MVP scale this is sufficient. Migration path: when listings exceed ~100k or geographic scope expands, add the PostGIS extension, populate a geometry column from the float pair, swap the search SQL, drop the floats. See [[decisions/2026-05-27-defer-postgis-to-scale]].
 
 ### Commission rate
 `commissionRate` on `User` is nullable. `null` = use platform default (currently 13%). When admin sets a custom rate (A-013), it's stored here and read by `CommissionStrategy` at pricing time.

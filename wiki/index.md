@@ -2,7 +2,7 @@
 title: Wiki Index
 tags:
   - index
-last-updated: 2026-05-01
+last-updated: 2026-05-27
 ---
 
 # YachtBay Wiki Index
@@ -40,6 +40,12 @@ Master table of contents for the YachtBay knowledge vault.
 | [[decisions/2026-05-02-platform-cancellation-policy]] | Platform-defined cancellation policy, extensible per owner |
 | [[decisions/2026-05-03-backend-architecture]] | NestJS modular monolith with CQRS, Domain Events, Ports & Adapters |
 | [[decisions/2026-05-03-frontend-monorepo]] | Separate storefront + owner panel apps in a Turborepo monorepo |
+| [[decisions/2026-05-27-defer-postgis-to-scale]] | Lat/lng floats + haversine SQL at MVP; PostGIS deferred to scale |
+| [[decisions/2026-05-27-sync-payment-capture]] | Payment captured synchronously inside the booking DB transaction |
+| [[decisions/2026-05-27-defer-transactional-outbox]] | Outbox table in schema; poller deferred; emails sync via EmailPort |
+| [[decisions/2026-05-27-scoped-bullmq-usage]] | One BullMQ queue at MVP (payout-queue); Redis from Milestone 4 only |
+| [[decisions/2026-05-27-cqrs-scoped-to-booking]] | CQRS applied to booking module only; other modules use plain services |
+| [[decisions/2026-05-27-minimal-admin-mvp]] | Admin panel reduced to 4 endpoints for soft launch |
 
 ## Specs
 
@@ -55,7 +61,7 @@ Master table of contents for the YachtBay knowledge vault.
 | [[specs/design/sitemap-admin]] | Admin panel site map — 10 pages, users, listings, bookings, revenue, settings |
 | [[specs/design/stitch-brief]] | Complete Google Stitch design brief — all 18 storefront pages, user stories, components, design direction |
 | [[specs/data-model]] | Final Prisma schema — all entities, enums, indexes, and design decisions |
-| [[specs/api-contract]] | Full API contract — 54 endpoints across 8 modules with request/response shapes |
+| [[specs/api-contract]] | Full API contract — 42 MVP endpoints (54 total incl. deferred admin) across 8 modules |
 | [[specs/env-variables]] | All environment variables for backend, storefront, owner panel, and admin |
 
 ## Roadmap

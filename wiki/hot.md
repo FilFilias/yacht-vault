@@ -2,7 +2,7 @@
 title: Hot — Session Context Cache
 tags:
   - meta
-last-updated: 2026-05-05
+last-updated: 2026-05-27
 ---
 
 # Hot — Session Context Cache
@@ -14,9 +14,9 @@ last-updated: 2026-05-05
 
 ## Current Focus
 
-All pre-development documentation complete. Ready to start scaffolding (Milestone 1).
+Backend architecture stress-tested and simplified for solo developer. 6 scope decisions locked in (2026-05-27). Ready to start scaffolding (Milestone 1).
 
-## Recent Decisions (2026-05-01 — updated)
+## Recent Decisions (2026-05-27 — architecture simplification)
 
 - Platform name: **YachtBay** (temporary — to be revisited)
 - Launch market: **Greece only**
@@ -25,7 +25,12 @@ All pre-development documentation complete. Ready to start scaffolding (Mileston
 - Crew options: **Bareboat, skippered, fully crewed** — defined per yacht by owner
 - Charter types: **Day trips + multi-day/weekly**
 - Target customer: **Mid-range travelers** (primary)
-- Payments: **Stripe Connect Accounts v2** (Express-style config) — destination charges, platform controls payout timing (release 24–48h after charter start). Express deprecated for new integrations.
+- Payments: **Stripe Connect Accounts v2** — destination charges, synchronous capture inside booking transaction, payout 24–48h after charter start
+- Geo search: **Lat/lng + haversine SQL** — PostGIS deferred to scale
+- Events: **Synchronous emails via EmailPort** — outbox table in schema, poller deferred
+- Queues: **payout-queue only** — Redis from Milestone 4, other queues deferred
+- CQRS: **Booking module only** — other modules use plain NestJS services
+- Admin: **4 endpoints at MVP** — full admin panel post-traction
 
 ## Vault Status
 
@@ -49,6 +54,6 @@ All pre-development documentation complete. Ready to start scaffolding (Mileston
 
 ## Next Steps
 
-1. ~~Product design~~ → **In progress** — Google Stitch design brief created at [[specs/design/stitch-brief]]
-2. Feed stitch-brief.md into Google Stitch to generate storefront UI
-3. Connect Google Stitch MCP to Claude Code and transform UI into React Router 7 SSR code
+1. **Start Milestone 1 scaffolding** — NestJS + Fastify + Prisma + PostgreSQL + auth + Turborepo + Railway
+2. ~~Product design~~ → design brief created at [[specs/design/stitch-brief]] — feed into Google Stitch when M1 is complete
+3. Connect Google Stitch MCP to Claude Code to transform UI into React Router 7 SSR code

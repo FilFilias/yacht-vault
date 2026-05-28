@@ -6,7 +6,7 @@ tags:
   - backend
   - api
 status: approved
-last-updated: 2026-05-05
+last-updated: 2026-05-27
 ---
 
 # API Contract
@@ -312,7 +312,7 @@ limit        integer   (default: 20, max: 50)
 }
 ```
 
-**Notes**: `calculatedPriceCents` is the total price for the full requested date range (if `checkIn`/`checkOut` provided) — used on listing cards. Only `ACTIVE` listings returned. PostGIS geo filter applied when location/lat/lng provided.
+**Notes**: `calculatedPriceCents` is the total price for the full requested date range (if `checkIn`/`checkOut` provided) — used on listing cards. Only `ACTIVE` listings returned. Haversine geo filter applied when location/lat/lng provided.
 
 ---
 
@@ -676,13 +676,13 @@ Idempotency-Key: <uuid> (required)
 }
 ```
 
-**Errors**: `409` dates no longer available | `409` below minimum charter duration | `402` payment failed (Stripe error) | `422` validation error | `409` idempotency key already used (returns original response)
+**Errors**: `409` dates no longer available | `409` below minimum charter duration | `402` payment failed — transaction rolled back, no reservation created | `422` validation error | `409` idempotency key already used (returns original response)
 
 **Notes**:
-- Entire booking creation + payment in a single DB transaction with `SELECT FOR UPDATE`
-- `status` goes directly to `CONFIRMED` (instant book — no PENDING → approve step)
-- `outbox_event` written in same transaction
-- On success: emails to renter + owner dispatched async via BullMQ
+- Entire booking creation + payment capture in a single DB transaction with `SELECT FOR UPDATE`
+- `Stripe.paymentIntents.create({ confirm: true })` called inside the transaction — on Stripe failure, ROLLBACK is issued and `402` is returned
+- `status` goes directly to `CONFIRMED` (instant book — PENDING is unreachable in the MVP booking path)
+- After commit: confirmation emails sent synchronously via EmailPort (try-catch — email failures are logged but do not fail the booking)
 
 ---
 
@@ -774,7 +774,7 @@ limit     integer (default: 20)
 **Notes**:
 - Refund calculated from `cancellationPolicySnapshot` (not current platform policy)
 - Platform commission never refunded
-- Stripe refund processed async via BullMQ
+- Stripe refund issued synchronously via `stripe.refunds.create()` inside the cancel handler
 - Availability released back to `AVAILABLE` (PREP days also released)
 
 ---
@@ -899,19 +899,16 @@ limit   integer (default: 20)
 
 All admin endpoints require `ADMIN` role. Prefix: `/admin/`.
 
----
+### Phase 1 — MVP (soft launch)
 
-### Users
+Four endpoints implemented at Milestone 6. Schema fields for all deferred endpoints are already in place.
+
+---
 
 #### `GET /admin/users`
 **Query params**: `search`, `role`, `status`, `page`, `limit`
 
 **Response `200`**: Paginated list of users with `id`, `firstName`, `lastName`, `email`, `roles`, `status`, `createdAt`.
-
----
-
-#### `GET /admin/users/:id`
-**Response `200`**: Full user profile including Stripe status, booking counts, total spend/earned.
 
 ---
 
@@ -922,60 +919,9 @@ All admin endpoints require `ADMIN` role. Prefix: `/admin/`.
 
 ---
 
-#### `PATCH /admin/users/:id/reactivate`
-**Response `200`**: `{ "status": "ACTIVE" }`
-**Notes**: Listings remain `PAUSED` — owner must reactivate manually.
-
----
-
-#### `PATCH /admin/users/:id/commission`
-**Request body**: `{ "commissionRate": "number (e.g. 10.00 for 10%) | null (revert to platform default)" }`
-**Response `200`**: `{ "commissionRate": 10.00 }`
-
----
-
-### Listings
-
-#### `GET /admin/yachts`
-**Query params**: `search`, `status`, `type`, `ownerId`, `page`, `limit`
-**Response `200`**: Paginated listings with owner info and booking count.
-
----
-
-#### `GET /admin/yachts/:id`
-**Response `200`**: Full listing detail including all fields, photos, owner info, booking history.
-
----
-
-#### `PATCH /admin/yachts/:id/status`
-**Request body**: `{ "status": "ACTIVE | PAUSED", "reason": "string (required for PAUSED)" }`
-**Response `200`**: `{ "status": "PAUSED" }`
-**Notes**: Owner notified by email with reason.
-
----
-
-#### `DELETE /admin/yachts/:id`
-**Response `204`**: No content
-**Errors**: `409` listing has confirmed future bookings
-
----
-
-### Bookings
-
 #### `GET /admin/bookings`
 **Query params**: `search`, `status`, `checkInFrom`, `checkInTo`, `page`, `limit`
 **Response `200`**: Paginated bookings with renter, owner, yacht, financials including `platformFeeCents`.
-
----
-
-#### `GET /admin/bookings/:id`
-**Response `200`**: Full booking detail including reservation event log, all payment records, Stripe IDs.
-
----
-
-#### `POST /admin/bookings/:id/trigger-payout`
-**Response `200`**: `{ "stripeTransferId": "string" }`
-**Errors**: `409` payout already triggered | `409` booking not COMPLETED
 
 ---
 
@@ -992,57 +938,24 @@ All admin endpoints require `ADMIN` role. Prefix: `/admin/`.
 
 ---
 
-### Revenue
+### Deferred to post-launch
 
-#### `GET /admin/revenue`
-**Query params**: `from` (date), `to` (date)
+The following 12 endpoints are designed and documented here but not implemented at MVP. Schema fields are already in place for all of them.
 
-**Response `200`**:
-```json
-{
-  "summary": {
-    "totalCommissionCents": 18720000,
-    "thisMonthCents": 1872000,
-    "thisYearCents": 9360000,
-    "totalBookings": 120,
-    "completedBookings": 108,
-    "cancelledBookings": 12
-  },
-  "byMonth": [
-    { "month": "2026-05", "bookings": 12, "commissionCents": 1872000 }
-  ]
-}
-```
-
----
-
-### Settings
-
-#### `GET /admin/settings`
-**Response `200`**:
-```json
-{
-  "defaultCommissionRate": 13.00,
-  "cancellationPolicy": {
-    "dayTrip": { "fullRefundDays": 5, "partialRefundDays": 1, "partialRefundPercent": 50 },
-    "weekly": { "fullRefundDays": 30, "partialRefundDays": 14, "partialRefundPercent": 50 }
-  },
-  "platformName": "YachtBay"
-}
-```
-
----
-
-#### `PATCH /admin/settings`
-**Request body** (partial update):
-```json
-{
-  "defaultCommissionRate": "number (e.g. 13.00)",
-  "cancellationPolicy": { ... },
-  "platformName": "string"
-}
-```
-**Response `200`**: Updated settings object.
+| Endpoint | Description |
+|---|---|
+| `GET /admin/users/:id` | Full user profile with Stripe status, booking counts, spend/earned |
+| `PATCH /admin/users/:id/reactivate` | Reactivate suspended user (listings stay PAUSED) |
+| `PATCH /admin/users/:id/commission` | Set per-owner commission rate override |
+| `GET /admin/yachts` | Paginated listings with owner info and booking count |
+| `GET /admin/yachts/:id` | Full listing detail with photos, owner, booking history |
+| `PATCH /admin/yachts/:id/status` | Pause or reactivate listing, notify owner by email |
+| `DELETE /admin/yachts/:id` | Delete listing (blocked if confirmed future bookings) |
+| `GET /admin/bookings/:id` | Full booking detail with event log, payment records, Stripe IDs |
+| `POST /admin/bookings/:id/trigger-payout` | Manually trigger owner payout release |
+| `GET /admin/revenue` | Commission summary + monthly breakdown |
+| `GET /admin/settings` | Platform commission rate + cancellation policy thresholds |
+| `PATCH /admin/settings` | Update commission rate, cancellation policy, platform name |
 
 ---
 
@@ -1057,8 +970,9 @@ All admin endpoints require `ADMIN` role. Prefix: `/admin/`.
 | Bookings | create, list, get, cancel, check-in, complete | 6 |
 | Payments | list, webhook | 2 |
 | Stripe Connect | onboard, status, dashboard-link | 3 |
-| Admin | users (5), yachts (4), bookings (4), revenue (1), settings (2) | 16 |
-| **Total** | | **54** |
+| Admin (Phase 1) | list users, suspend user, list bookings, refund booking | 4 |
+| Admin (deferred) | +12 post-launch endpoints — see §8 above | — |
+| **Total (MVP)** | | **42** |
 
 ---
 

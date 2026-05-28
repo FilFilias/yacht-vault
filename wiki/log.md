@@ -11,6 +11,31 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-05-27 — Backend architecture stress-tested and simplified
+
+**Action**: Stress-tested original architecture against solo-developer constraints. Locked in 6 scope decisions deferring complexity that doesn't earn its cost at MVP scale. Updated all affected specs and created 6 ADRs.
+
+**Added:**
+- `decisions/2026-05-27-defer-postgis-to-scale.md` — lat/lng floats + haversine SQL; PostGIS deferred
+- `decisions/2026-05-27-sync-payment-capture.md` — Stripe capture synchronous inside booking transaction
+- `decisions/2026-05-27-defer-transactional-outbox.md` — outbox table preserved; poller deferred; emails sync via EmailPort
+- `decisions/2026-05-27-scoped-bullmq-usage.md` — one BullMQ queue (payout-queue); Redis from M4
+- `decisions/2026-05-27-cqrs-scoped-to-booking.md` — CQRS only on booking state machine
+- `decisions/2026-05-27-minimal-admin-mvp.md` — 4 admin endpoints for soft launch
+
+**Updated:**
+- `specs/backend-architecture.md` — tech stack, booking workflow, payment flow, event architecture, "deferred to scale" subsection
+- `specs/data-model.md` — Prisma schema (lat/lng floats, no postgresqlExtensions), indexes, design decisions
+- `specs/api-contract.md` — POST /bookings notes, Admin section restructured (Phase 1 + deferred), endpoint count 54 → 42
+- `specs/mvp-scope.md` — admin panel scope reduced, deferred items added to out-of-scope table
+- `specs/env-variables.md` — Redis note, BullMQ section collapsed to payout-queue only
+- `roadmap/phase-1-development.md` — M1 (no PostGIS/Redis), M3 (haversine), M4 (sync booking, payout-queue only), M6 (4 admin endpoints)
+- `wiki/index.md`, `wiki/hot.md` — 6 new decisions indexed, current focus updated
+
+**Source**: Architecture stress-test session — Direction B: targeted simplifications for solo developer.
+
+---
+
 ## 2026-05-01 — Vault initialized
 
 **Action**: Created vault structure and initial documentation from founding conversation.

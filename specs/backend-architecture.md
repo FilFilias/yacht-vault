@@ -5,7 +5,7 @@ tags:
   - technical
   - backend
 status: approved
-last-updated: 2026-05-03
+last-updated: 2026-05-27
 ---
 
 # Backend Architecture
@@ -25,7 +25,7 @@ last-updated: 2026-05-03
 | **Language**      | TypeScript (strict)                               | Type safety across the entire backend — non-negotiable                                                               |
 | **Framework**     | NestJS                                            | Enforced modular structure, built-in DI, CQRS module, Guards, Pipes — matches our architecture pattern exactly       |
 | **HTTP adapter**  | Fastify (via NestJS adapter)                      | 2–3× better throughput than Express with near-zero code changes in NestJS                                            |
-| **Database**      | PostgreSQL                                        | ACID transactions, row-level locking, date-range queries, PostGIS for geo search                                     |
+| **Database**      | PostgreSQL                                        | ACID transactions, row-level locking, date-range queries                                     |
 | **ORM**           | Prisma                                            | Type-safe queries, auto-generated migrations, good NestJS integration, `$queryRaw` for locking operations            |
 | **Job queues**    | BullMQ + Redis                                    | Persistent async jobs, retry on failure, delayed jobs (payout scheduling)                                            |
 | **Auth**          | Custom JWT via `@nestjs/jwt` + `@nestjs/passport` | Full control, role-based (owner/renter/admin), no vendor dependency                                                  |
@@ -33,8 +33,8 @@ last-updated: 2026-05-03
 | **Email**         | Resend + React Email                              | TypeScript-native, React-based templates, excellent DX                                                               |
 | **Image storage** | Cloudflare R2                                     | S3-compatible, zero egress fees, pairs with Cloudflare CDN. No image transformation — handle resizing at upload time |
 | **Maps**          | Mapbox                                            | Frontend map display, location picker. See [[wiki/concepts/tech-stack]] for alternatives                             |
-| **Geo search**    | PostGIS (PostgreSQL extension)                    | DB-level geographic queries — sufficient at MVP scale, no extra service                                              |
-| **Scheduler**     | `@nestjs/schedule`                                | Outbox poller, payout release scheduler, availability cleanup                                                        |
+| **Geo search**    | PostgreSQL + haversine SQL                        | `$queryRaw` haversine formula with B-tree composite index. PostGIS deferred until listings exceed ~100k or scope expands beyond Greece — see [[decisions/2026-05-27-defer-postgis-to-scale]]                                              |
+| **Scheduler**     | `@nestjs/schedule`                                | Availability cleanup tasks. Outbox poller deferred to scale — payout release handled by BullMQ payout-queue                                                        |
 | **Hosting**       | Railway                                           | Managed PostgreSQL + Redis, simple Node.js deployments, scales to containers                                         |
 
 ---
@@ -74,9 +74,9 @@ This is the right choice because:
 └─────────────────────────────────────────────────────┘
 ```
 
-**CQRS** — Commands mutate state (CreateBooking, CancelBooking, ConfirmBooking). Queries read data (GetAvailableYachts, GetBookingDetails). Commands go through handlers with full validation, business rules, and locking. Queries go directly to the DB — no overhead.
+**CQRS (scoped to booking module)** — `@nestjs/cqrs` applied to the booking state machine: `CreateBookingCommand`, `CancelBookingCommand`, `CheckInCommand`, `CompleteBookingCommand`. All other modules use plain NestJS services. CQRS earns its overhead where commands combine pessimistic locking + pricing engine + version bumps. See [[decisions/2026-05-27-cqrs-scoped-to-booking]].
 
-**Domain Events + Transactional Outbox** — side effects (email, payment, notifications) are decoupled from core booking logic via events. Critical events are written to the outbox table inside the same Postgres transaction as the domain write — guaranteeing exactly-once delivery even on process crash.
+**Domain Events + Transactional Outbox (deferred to scale)** — the `outbox_events` table is in the schema as the migration path. At MVP, emails are sent synchronously post-commit via `EmailPort` (try-catch). Swapping to a queued delivery adapter requires zero changes to command handlers — Ports & Adapters isolates the mechanism. See [[decisions/2026-05-27-defer-transactional-outbox]].
 
 **Ports & Adapters** — all external integrations (Stripe, Resend, Cloudflare R2, Mapbox) are accessed through interfaces. Swapping a provider = new adapter implementation, zero business logic changes.
 
@@ -95,7 +95,7 @@ src/
 │   ├── pricing/             # Rate calculation, strategy engine, rules management
 │   ├── payments/            # Stripe Connect integration, webhooks, refunds, payouts
 │   ├── users/               # Owner + renter profiles, auth, roles
-│   ├── notifications/       # Email dispatch via BullMQ queues
+│   ├── notifications/       # Email dispatch via EmailPort (synchronous at MVP, queueable via adapter swap)
 │   └── search/              # Availability search, geo queries, filters
 │
 ├── infrastructure/
@@ -105,7 +105,7 @@ src/
 │   │   ├── stripe.adapter.ts
 │   │   ├── resend.adapter.ts
 │   │   └── r2.adapter.ts
-│   └── outbox/              # Outbox poller, event relay to BullMQ
+│   └── outbox/              # Outbox schema exists; poller deferred to scale
 │
 ├── common/
 │   ├── guards/              # JwtAuthGuard, RolesGuard
@@ -156,7 +156,7 @@ users
 yachts
   id, owner_id (→ users), name, type, length_meters
   capacity_guests, build_year, manufacturer, model
-  home_port, location_lat, location_lng  -- PostGIS point
+  home_port, location_lat, location_lng  -- Float columns (haversine geo search, PostGIS deferred)
   description, base_price_cents
   crew_options: bareboat | skippered | crewed | all  -- jsonb flags
   min_charter_days           -- e.g. 7 for summer weekly minimum
@@ -241,8 +241,8 @@ CREATE INDEX ON reservations (renter_id);
 -- Outbox polling
 CREATE INDEX ON outbox_events (status, created_at) WHERE status = 'pending';
 
--- Geo search (PostGIS)
-CREATE INDEX ON yachts USING GIST (location);
+-- Geo search (haversine — B-tree composite)
+CREATE INDEX ON yachts (status, location_lat, location_lng);
 ```
 
 ---
@@ -273,7 +273,7 @@ CREATE INDEX ON yachts USING GIST (location);
 
 Illegal transitions are rejected at the command handler before any DB write.
 
-### Synchronous flow — inside the HTTP request (target: < 200ms)
+### Synchronous flow — inside the HTTP request (target: < 300ms)
 
 ```
 POST /api/v1/bookings
@@ -288,23 +288,27 @@ POST /api/v1/bookings
         d. BEGIN Postgres transaction
            - SELECT FOR UPDATE on yacht_availability rows (pessimistic lock)
            - Assert all rows have status = 'available'
-           - INSERT reservation (status=PENDING, version=1)
+           - INSERT reservation (status=CONFIRMED, version=1) ← instant book
            - UPDATE yacht_availability rows (status=reserved)
-           - INSERT outbox_event (reservation.created)  ← same transaction
+           - INSERT reservation_event (created, triggeredBy=renter)
+           - Stripe.paymentIntents.create({ confirm: true })
+             → on Stripe failure: ROLLBACK → return 402
         e. COMMIT
-  5. Return 201 with reservation details
+  5. emailPort.send(renter_confirmation) // try-catch: failures logged, do not fail booking
+  6. emailPort.send(owner_notification)  // try-catch: failures logged, do not fail booking
+  7. payout-queue.add({ reservationId }, { delay: charterStart + 24h })
+  8. Return 201 with reservation details
 ```
 
-### Asynchronous flow — after transaction commits
+> **PENDING status**: stays in the schema (useful for future request-to-book flows) but is unreachable in the MVP booking path. See [[decisions/2026-05-27-sync-payment-capture]].
 
-Four BullMQ jobs enqueued in parallel, each with independent retry policy:
+### Post-commit side effects
 
 ```
-reservation.created outbox event → BullMQ:
-  ├── payment-queue:    Capture deposit via Stripe Connect
-  ├── email-queue:      Confirmation email to renter (Resend)
-  ├── host-queue:       Booking notification to owner (Resend)
-  └── audit-queue:      Append to reservation_events
+After COMMIT:
+  ├── emailPort.send(renter_confirmation)  // synchronous try-catch — logs on failure
+  ├── emailPort.send(owner_notification)   // synchronous try-catch — logs on failure
+  └── payout-queue delayed job scheduled   // BullMQ: release transfer at charter_start + 24h
 ```
 
 ---
@@ -389,16 +393,28 @@ Renter pays €1,000
 ### Payment flow
 
 ```
-CreateBookingCommand confirms → enqueue payment-queue job
-  → PaymentHandler:
-     - Create Stripe PaymentIntent with:
-         amount: total_price_cents
-         application_fee_amount: platform_fee_cents
-         transfer_data.destination: owner.stripe_account_id
-     - Capture deposit immediately (instant book)
-     - Stripe webhook confirms capture → update payments table
-     - Payout to owner scheduled: release at charter_start + 24h
+POST /bookings → CreateBookingCommand:
+  Inside DB transaction (after SELECT FOR UPDATE + INSERT reservation):
+     - Stripe.paymentIntents.create({
+         amount: total_price_cents,
+         application_fee_amount: platform_fee_cents,
+         transfer_data: { destination: owner.stripe_account_id },
+         confirm: true,
+         payment_method: stripePaymentMethodId   ← from request body
+       })
+     - On success: INSERT payment record, COMMIT
+     - On Stripe error: ROLLBACK → return 402 (no reservation created)
+
+  After COMMIT:
+     - payout-queue delayed job scheduled (release at charter_start + 24h)
+
+Stripe webhooks (secondary / idempotent path):
+  - payment_intent.payment_failed → log, trigger cleanup if needed
+  - account.updated → update stripe_account_status on User
+  - charge.refunded → update payment record on cancellation refund
 ```
+
+> See [[decisions/2026-05-27-sync-payment-capture]] for the trade-off analysis (DB transaction held ~300ms during Stripe call).
 
 ### Cancellation refunds
 
@@ -418,26 +434,39 @@ The `cancellation_policy_snapshot` on the reservation captures the policy at boo
 
 ## 9. Event Architecture
 
-### Event types and delivery
+### MVP: synchronous side effects + one async queue
 
-| Event | Persisted | Mechanism | Consumers |
-|---|---|---|---|
-| `reservation.created` | Yes — outbox | Transactional outbox → BullMQ | Payment, email (renter), host notification, audit |
-| `reservation.confirmed` | Yes — outbox | Transactional outbox → BullMQ | Payment capture, email |
-| `reservation.cancelled` | Yes — outbox | Transactional outbox → BullMQ | Refund, email, availability release |
-| `reservation.checked_in` | BullMQ only | EventEmitter → BullMQ | Host notification |
-| `reservation.completed` | BullMQ only | EventEmitter → BullMQ | Balance capture, review request (Phase 2) |
-| `payment.captured` | reservation_events | Stripe webhook → handler | Reservation status update |
+At MVP, domain side effects are delivered synchronously post-commit (emails via `EmailPort`) or via a single BullMQ queue (delayed payout scheduling). The full event-driven architecture is the target state; the `outbox_events` table is already in the schema as the migration path.
 
-### Transactional outbox
+| Event | MVP mechanism | Consumers |
+|---|---|---|
+| Booking confirmed | Synchronous post-commit | emailPort.send() renter + owner |
+| Booking cancelled | Synchronous post-commit | Stripe refund + emailPort.send() renter + owner |
+| Charter checked-in | Synchronous | payout-queue job scheduled |
+| Charter completed | Synchronous | payout-queue job triggered |
+| payment_intent.payment_failed | Stripe webhook | Log / idempotent cleanup |
+| account.updated | Stripe webhook | Update stripe_account_status on User |
+| charge.refunded | Stripe webhook | Update payment record |
 
-For payment-triggering events (`reservation.created`, `reservation.confirmed`, `reservation.cancelled`), the event is written to `outbox_events` inside the same Postgres transaction as the domain write. A `@nestjs/schedule` poller runs every 1–2 seconds, picks up pending outbox events, and delivers them to BullMQ. This guarantees exactly-once delivery — the event cannot be lost between the domain write and the queue enqueue.
+### BullMQ queues at MVP
 
-### Why this matters
+One queue: `payout-queue`. Handles the one job that genuinely requires persistent delayed execution — release the Stripe transfer to the owner 24–48h after charter start.
 
-Without the outbox: booking created → process crashes before enqueuing → payment job never runs → renter's card not charged, owner not notified.
+```
+payout-queue (delayed job):
+  - Triggered: after charter check-in
+  - Delay: charter_start_datetime + 24h
+  - Action: Stripe.transfers.create({ destination: owner.stripeAccountId, amount: ownerPayoutCents })
+  - Retry: 3 attempts with exponential backoff
+```
 
-With the outbox: even if the process crashes, the outbox row is committed. On restart, the poller picks it up and delivers it.
+### Transactional outbox — deferred to scale
+
+The `outbox_events` table exists in the schema and is preserved as a future option. The `@nestjs/schedule` outbox poller and BullMQ delivery queues (email-queue, host-queue, audit-queue) are **not wired at MVP**.
+
+Migration path (when reliability evidence warrants it): swap `ResendAdapter` for a new `QueuedEmailAdapter` that enqueues to BullMQ, add the outbox poller, wire the remaining queues. Command handlers require **zero changes** — Ports & Adapters isolates the delivery mechanism. This is ~1 day of work.
+
+See [[decisions/2026-05-27-defer-transactional-outbox]] and [[decisions/2026-05-27-scoped-bullmq-usage]].
 
 ---
 
@@ -518,7 +547,7 @@ Single Railway deployment. One NestJS instance + Fastify. Managed PostgreSQL + R
 ### Scale phase (significant traffic)
 
 - `yacht_availability` table partitioned by year — it will grow large (one row per yacht per date).
-- Dedicated search service: replace PostGIS queries with Meilisearch or Algolia for sub-50ms search.
+- Dedicated search service: replace haversine SQL with Meilisearch or Algolia for sub-50ms search.
 - Extract high-load modules (Search, Availability) to separate services if warranted — module boundaries are already clean for this.
 
 ---
@@ -535,12 +564,31 @@ Single Railway deployment. One NestJS instance + Fastify. Managed PostgreSQL + R
 | Clerk / Auth0 | Vendor dependency, cost at scale. Custom JWT with `@nestjs/passport` is well-documented and gives full control. |
 | SendGrid | Resend has better TypeScript/React Email DX and is the modern choice for this stack. |
 | Cloudinary | R2 chosen for cost efficiency (zero egress fees). Cloudinary remains the migration path if image transformation becomes needed. |
-| Algolia / Meilisearch | PostGIS is sufficient at MVP scale. Migrate if search performance becomes a bottleneck. |
+| Algolia / Meilisearch | Haversine SQL is sufficient at MVP scale. Migrate if search performance becomes a bottleneck. |
 | Google Maps | More expensive than Mapbox. Mapbox free tier covers MVP comfortably. |
+
+### Deferred to scale, not rejected
+
+These are correct long-term choices that are premature at MVP scale. They are preserved as migration paths, not abandoned:
+
+| Pattern | Current state at MVP | Migration trigger |
+|---|---|---|
+| **PostGIS geo search** | Lat/lng floats + `$queryRaw` haversine | ~100k listings or geographic expansion beyond Greece |
+| **Transactional outbox** | Table in schema; poller not wired | Measurable email delivery failures in production |
+| **Multi-queue BullMQ** | Single `payout-queue` | Each additional queue is ~1 day of work — add when evidence warrants |
+| **CQRS everywhere** | Applied to booking module only | Extract per module when command complexity justifies it |
+
+---
 
 ## Related
 
 - [[decisions/2026-05-03-backend-architecture]]
+- [[decisions/2026-05-27-defer-postgis-to-scale]]
+- [[decisions/2026-05-27-sync-payment-capture]]
+- [[decisions/2026-05-27-defer-transactional-outbox]]
+- [[decisions/2026-05-27-scoped-bullmq-usage]]
+- [[decisions/2026-05-27-cqrs-scoped-to-booking]]
+- [[decisions/2026-05-27-minimal-admin-mvp]]
 - [[wiki/concepts/stripe-connect]]
 - [[wiki/concepts/commission-model]]
 - [[specs/mvp-scope]]
