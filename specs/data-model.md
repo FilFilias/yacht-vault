@@ -360,6 +360,8 @@ model PricingRule {
   ruleType String
   // seasonal | weekend | long_charter | crew_option | promotional
 
+  crewOption CrewOption? // set only for ruleType = crew_option (which option this fee prices)
+
   // Date range (nullable for non-date-based rules like crew_option)
   dateFrom DateTime? @db.Date
   dateTo   DateTime? @db.Date
@@ -474,6 +476,9 @@ INDEX ON yachts (status)
 
 ### Location as lat/lng floats (not PostGIS)
 `locationLat Float?` + `locationLng Float?` replace what would have been a `Unsupported("geometry(Point, 4326)")` PostGIS column. Geo search uses `$queryRaw` with a haversine formula and a B-tree composite index on `(status, location_lat, location_lng)`. At Greece-only MVP scale this is sufficient. Migration path: when listings exceed ~100k or geographic scope expands, add the PostGIS extension, populate a geometry column from the float pair, swap the search SQL, drop the floats. See [[decisions/2026-05-27-defer-postgis-to-scale]].
+
+### `crewOption` on PricingRule
+Nullable enum, set only when `ruleType = crew_option`. It records which crew option a per-day fee prices (SKIPPERED vs CREWED), since `PATCH /yachts/:id/pricing` stores skipper and crew fees as separate `crew_option` rules. Non-crew rules leave it null. This was a schema gap found during Milestone 2 planning — the original schema had no way to distinguish the two crew-option fees.
 
 ### Commission rate
 `commissionRate` on `User` is nullable. `null` = use platform default (currently 13%). When admin sets a custom rate (A-013), it's stored here and read by `CommissionStrategy` at pricing time.

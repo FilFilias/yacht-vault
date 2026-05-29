@@ -11,6 +11,17 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-05-29 — PricingRule.crewOption added (Milestone 2)
+
+**Action**: Milestone 2 (Listings) backend implemented. During planning, a schema gap surfaced: `crew_option` pricing rules had no way to distinguish SKIPPERED vs CREWED fees. Added a nullable `crewOption` enum column to `PricingRule`.
+
+**Updated:**
+- `specs/data-model.md` — `PricingRule.crewOption` field + design note
+
+**Also**: earlier in M2, `r2Key` was renamed to `storageKey` (provider-neutral) across `data-model.md`, `api-contract.md`, and `user-stories/owner.md`.
+
+---
+
 ## 2026-05-27 — Backend architecture stress-tested and simplified
 
 **Action**: Stress-tested original architecture against solo-developer constraints. Locked in 6 scope decisions deferring complexity that doesn't earn its cost at MVP scale. Updated all affected specs and created 6 ADRs.
