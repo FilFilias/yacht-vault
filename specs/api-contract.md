@@ -640,6 +640,39 @@ to      date (required, YYYY-MM-DD, max 12 months from now)
 
 ---
 
+### `POST /bookings/payment-intent`
+**Auth**: JWT (RENTER role) | **Rate limit**: 20 req/min per IP
+
+*(Added 2026-05-29 — SCA handshake; see amended `decisions/2026-05-27-sync-payment-capture.md`.)* Creates the authorization the renter confirms before booking: returns a `clientSecret` for a **manual-capture** PaymentIntent created on the platform account (no `transfer_data` — separate charges + transfers), plus the authoritative price breakdown. The renter confirms it client-side via Stripe.js (handling SCA/3DS), then calls `POST /bookings` with its id.
+
+**Request body**:
+```json
+{
+  "yachtId": "string (required)",
+  "checkIn": "date (required)",
+  "checkOut": "date (required)",
+  "crewOption": "CrewOption (required)",
+  "guestCount": "integer (required)"
+}
+```
+
+**Response `201`**:
+```json
+{
+  "stripePaymentIntentId": "string",
+  "clientSecret": "string",
+  "amountCents": 225000,
+  "currency": "EUR",
+  "breakdown": [{ "label": "Base rate (5 days × €350.00/day)", "amountCents": 175000 }]
+}
+```
+
+**Errors**: `409` dates not available | `409` below minimum charter duration | `422` validation error | `409` owner's Stripe account not active
+
+**Notes**: Price is computed server-side (PricingEngine) and embedded in the PaymentIntent amount; `POST /bookings` re-verifies the amount to prevent tampering. Availability is a soft pre-check here — the authoritative lock happens in `POST /bookings`.
+
+---
+
 ### `POST /bookings`
 **Auth**: JWT (RENTER role) | **Rate limit**: 10 req/min per IP | **Idempotency**: Required
 
@@ -656,7 +689,7 @@ Idempotency-Key: <uuid> (required)
   "checkOut": "date (required)",
   "crewOption": "CrewOption (required)",
   "guestCount": "integer (required)",
-  "stripePaymentMethodId": "string (required — from Stripe Elements)"
+  "stripePaymentIntentId": "string (required — id of a manual-capture PaymentIntent already authorized client-side via Stripe.js; status requires_capture)"
 }
 ```
 
@@ -678,11 +711,13 @@ Idempotency-Key: <uuid> (required)
 
 **Errors**: `409` dates no longer available | `409` below minimum charter duration | `402` payment failed — transaction rolled back, no reservation created | `422` validation error | `409` idempotency key already used (returns original response)
 
-**Notes**:
-- Entire booking creation + payment capture in a single DB transaction with `SELECT FOR UPDATE`
-- `Stripe.paymentIntents.create({ confirm: true })` called inside the transaction — on Stripe failure, ROLLBACK is issued and `402` is returned
-- `status` goes directly to `CONFIRMED` (instant book — PENDING is unreachable in the MVP booking path)
-- After commit: confirmation emails sent synchronously via EmailPort (try-catch — email failures are logged but do not fail the booking)
+**Notes** *(amended 2026-05-29 — SCA + capture-after-commit; see `decisions/2026-05-27-sync-payment-capture.md`)*:
+- The card is **authorized client-side** first (manual-capture PaymentIntent confirmed via Stripe.js, so EU **SCA/3DS** is handled in-browser); this request receives the already-authorized `stripePaymentIntentId` (status `requires_capture`).
+- Transaction: `SELECT FOR UPDATE` on the **`Yacht` row** → re-validate availability + recompute price → verify the PaymentIntent (status `requires_capture`, amount == quoted total, currency EUR, belongs to this renter) → insert reservation + `RESERVED` availability rows (`UNIQUE(yachtId, date)` is the final race guard → `409`) → **COMMIT**.
+- **After commit:** `Stripe.paymentIntents.capture()`. If a date race or validation fails, the PaymentIntent is **voided** so the renter's hold is released — an uncaptured authorization expires, so money is never taken without a booking. A declined authorization surfaces as `402`.
+- Funds are captured to the **platform** (separate charges + transfers); the owner's share is transferred later by the `payout-queue` (enqueued at check-in — M5).
+- `status` goes directly to `CONFIRMED` (instant book — PENDING is unreachable in the MVP booking path).
+- After commit + capture: confirmation emails sent synchronously via EmailPort (try-catch — email failures are logged but do not fail the booking).
 
 ---
 

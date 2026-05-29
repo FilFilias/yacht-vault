@@ -11,6 +11,24 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-05-29 — M4 Booking Core stress-tested; sync-capture ADR + api-contract amended
+
+**Action**: Pre-implementation stress-test of the M4 booking + Stripe flow (idea-refine). Confirmed three design decisions and amended the affected specs/ADR before writing the plan.
+
+**Decisions:**
+- **Separate charges + transfers** (not destination charges) — platform captures at booking; the `payout-queue` transfers the owner's share later (enqueued at check-in, M5). Gives payout-timing control + trivial pre-charter refunds.
+- **Lock the `Yacht` row** + `UNIQUE(yachtId, date)` safety net — M3's "absence = AVAILABLE" model means there are no per-date rows to `SELECT FOR UPDATE`.
+- **Authorize client-side (SCA/3DS) → capture after commit** — a server-side `confirm` can't satisfy EU SCA in one round-trip; capture-after-commit also closes the "charged-but-no-booking" window (uncaptured auths expire).
+
+**Updated:**
+- `decisions/2026-05-27-sync-payment-capture.md` — amendment section (SCA, capture-after-commit, separate transfers, Yacht-row lock)
+- `specs/api-contract.md` — added `POST /bookings/payment-intent`; `POST /bookings` now takes `stripePaymentIntentId`; notes rewritten
+- `CLAUDE.md` (backend repo) — payments stack line, Direction B payments item, double-booking lock layer
+
+**Artifact**: design one-pager at `yachties-backend/docs/ideas/m4-booking-core.md`.
+
+---
+
 ## 2026-05-29 — Milestone 3 (Discovery) backend implemented
 
 **Action**: Implemented the M3 backend — pricing engine, availability module, and search — via subagent-driven TDD. All green (97 e2e + 15 unit).
