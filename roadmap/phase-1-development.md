@@ -3,10 +3,12 @@ title: Phase 1 — Development Roadmap
 tags:
   - roadmap
   - development
-last-updated: 2026-05-27
+last-updated: 2026-05-29
 ---
 
 # Phase 1 — Development Roadmap (MVP)
+
+> **Backend progress:** M1, M2, M3 backend ✅ complete (97 e2e + 15 unit tests green). Frontend and infrastructure not started. Next: M4 (Booking Core) backend.
 
 **Summary**: Build order for the YachtBay MVP — 7 milestones from project scaffolding to launch-ready. Each milestone produces a testable, shippable increment.
 
@@ -18,13 +20,13 @@ last-updated: 2026-05-27
 *Goal: Three deployed apps, auth working end-to-end*
 
 ### Backend
-- [ ] NestJS project initialized with Fastify adapter
-- [ ] Prisma configured, PostgreSQL connected, first migration run (full schema from [[specs/data-model]])
-- [ ] Global pipes (ValidationPipe), guards, and error filter wired up
-- [ ] Auth module: `register`, `verify-email`, `login`, `refresh`, `logout`, `forgot-password`, `reset-password`
-- [ ] Users module: `GET /users/me`, `PATCH /users/me`, `add-owner-role`
-- [ ] JWT strategy + `JwtAuthGuard` + `RolesGuard`
-- [ ] `.env.example` committed
+- [x] NestJS project initialized with Fastify adapter
+- [x] Prisma configured, PostgreSQL connected, first migration run (full schema from [[specs/data-model]])
+- [x] Global pipes (ValidationPipe), guards, and error filter wired up
+- [x] Auth module: `register`, `verify-email`, `login`, `refresh`, `logout`, `forgot-password`, `reset-password`
+- [x] Users module: `GET /users/me`, `PATCH /users/me`, `add-owner-role`
+- [x] JWT strategy + `JwtAuthGuard` + `RolesGuard`
+- [x] `.env.example` committed
 
 ### Frontend
 - [ ] Turborepo monorepo initialized (`apps/backend`, `apps/storefront`, `apps/owner-panel`, `packages/ui`, `packages/types`, `packages/api-client`)
@@ -51,12 +53,12 @@ last-updated: 2026-05-27
 *Goal: Owner can create, configure, and publish a yacht listing*
 
 ### Backend
-- [ ] Yachts module: `POST /yachts`, `GET /yachts/:id`, `PATCH /yachts/:id`, `PATCH /yachts/:id/status`, `DELETE /yachts/:id`
-- [ ] Slug generation on listing creation
-- [ ] Yacht photos: pre-signed R2 upload URL flow, `POST /yachts/:id/photos`, reorder, delete
-- [ ] Cloudflare R2 adapter wired up (`R2Adapter` implementing `StoragePort`)
-- [ ] Pricing configuration: `PATCH /yachts/:id/pricing` — creates `pricing_rules` for crew options + weekly rate
-- [ ] Configuration: `PATCH /yachts/:id/configuration` — crew options, charter types, prep days
+- [x] Yachts module: `POST /yachts`, `GET /yachts/:id`, `PATCH /yachts/:id`, `PATCH /yachts/:id/status`, `DELETE /yachts/:id`
+- [x] Slug generation on listing creation
+- [x] Yacht photos: pre-signed upload URL flow (`StoragePort`), `POST /yachts/:id/photos`, reorder, delete
+- [x] Cloudflare R2 adapter wired up (`R2Adapter` implementing `StoragePort`)
+- [x] Pricing configuration: `PATCH /yachts/:id/pricing` — creates `pricing_rules` for crew options + weekly rate
+- [x] Configuration: `PATCH /yachts/:id/configuration` — crew options, charter types, prep days
 
 ### Frontend (Owner Panel)
 - [ ] `/listings` — all listings page
@@ -79,10 +81,10 @@ last-updated: 2026-05-27
 *Goal: Renter can search and find yachts on the storefront*
 
 ### Backend
-- [ ] Availability module: `GET /yachts/:id/availability`, `POST /yachts/:id/availability/block`, `DELETE /yachts/:id/availability/block`
-- [ ] PREP day auto-blocking on booking confirmation (written now, triggered in Milestone 4)
-- [ ] Search module: `GET /yachts` with haversine geo filter (`$queryRaw`), date availability join, crew option filter, price filter, sort
-- [ ] `GET /yachts/:id/pricing` — PricingEngine with `BasePriceStrategy`, `WeeklyRateStrategy`, `CrewOptionStrategy`
+- [x] Availability module: `GET /yachts/:id/availability`, `POST /yachts/:id/availability/block`, `DELETE /yachts/:id/availability/block`
+- [x] PREP day auto-blocking helper `applyPrepDays` (written now, triggered in Milestone 4)
+- [x] Search module: `GET /yachts` with haversine geo filter (`$queryRaw`), date availability join, crew option filter, price filter, sort, pagination, per-result `calculatedPriceCents`
+- [x] `GET /yachts/:id/pricing` — PricingEngine with `BasePriceStrategy`, `WeeklyRateStrategy`, `CrewOptionStrategy`
 
 ### Frontend (Storefront)
 - [ ] Homepage (`/`) — hero with search bar, featured listings section, how it works, trust signals

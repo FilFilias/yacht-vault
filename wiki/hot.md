@@ -2,7 +2,7 @@
 title: Hot — Session Context Cache
 tags:
   - meta
-last-updated: 2026-05-27
+last-updated: 2026-05-29
 ---
 
 # Hot — Session Context Cache
@@ -14,7 +14,7 @@ last-updated: 2026-05-27
 
 ## Current Focus
 
-Backend architecture stress-tested and simplified for solo developer. 6 scope decisions locked in (2026-05-27). Ready to start scaffolding (Milestone 1).
+**Backend M1–M3 complete.** Auth + users (M1), yacht listings + photos + pricing config (M2), and discovery — pricing engine + availability + search (M3) — all built and tested (97 e2e + 15 unit green). Built with NestJS + Fastify + Prisma per Direction B. **Next: Milestone 4 (Booking Core)** — Stripe Connect, BullMQ payout-queue, bookings CQRS with synchronous capture. Frontend not started.
 
 ## Recent Decisions (2026-05-27 — architecture simplification)
 
@@ -54,6 +54,5 @@ Backend architecture stress-tested and simplified for solo developer. 6 scope de
 
 ## Next Steps
 
-1. **Start Milestone 1 scaffolding** — NestJS + Fastify + Prisma + PostgreSQL + auth + Turborepo + Railway
-2. ~~Product design~~ → design brief created at [[specs/design/stitch-brief]] — feed into Google Stitch when M1 is complete
-3. Connect Google Stitch MCP to Claude Code to transform UI into React Router 7 SSR code
+1. **Start Milestone 4 (Booking Core)** — Stripe Connect onboarding + webhooks, Redis + BullMQ payout-queue, Resend adapter (`EmailPort`), bookings module (`CreateBooking` CQRS command: `SELECT FOR UPDATE` + synchronous Stripe capture inside the transaction), wire `applyPrepDays` on confirmation
+2. **Frontend** (not started) — feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code (storefront search/detail can now consume the live M3 discovery API)

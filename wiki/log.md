@@ -11,6 +11,26 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-05-29 — Milestone 3 (Discovery) backend implemented
+
+**Action**: Implemented the M3 backend — pricing engine, availability module, and search — via subagent-driven TDD. All green (97 e2e + 15 unit).
+
+**Added (in the backend repo, not the vault):**
+- **Pricing engine** — strategy pipeline `BasePriceStrategy` → `WeeklyRateStrategy` (flat weekly rate replaces base on 7-day charters) → `CrewOptionStrategy` (per-day skipper/crew fee), folded by `PricingEngine`. Public `GET /yachts/:id/pricing` (422 below min / invalid range, 409 on unavailable dates).
+- **Availability module** — public `GET /yachts/:id/availability` (one-row-per-date; absence = AVAILABLE; `ownerNote` hidden; 12-month cap), owner-only `POST`/`DELETE /yachts/:id/availability/block` with reserved-date guards, and `applyPrepDays` helper (written now, triggered by booking in M4).
+- **Search** — public `GET /yachts`: one `$queryRaw` haversine query (geo radius + JSON crew-flag filter + `NOT EXISTS` date-availability + capacity/type/price filters + sort + pagination) with per-result `calculatedPriceCents`.
+
+**Scope decisions (Direction B continuity):**
+- **No server-side Mapbox geocoding at MVP** — `GET /yachts` takes `lat`/`lng`/`radiusKm`; place-name → coordinates is resolved client-side. A `MapboxGeocodingPort` can be added later without changing the search SQL.
+- `days` = nights = `dateDiff(checkOut, checkIn)`; availability occupies `[checkIn, checkOut)` (checkout day free).
+- Search-card `calculatedPriceCents` uses the **bareboat** price for the range — a representative "from" price.
+
+**No schema/spec changes** — M3 used the existing data model (`Yacht`, `YachtAvailability`, `PricingRule`); `api-contract.md` already documents these endpoints.
+
+**Source**: M3 plan at `yachties-backend/docs/superpowers/plans/2026-05-29-milestone-3-discovery.md`.
+
+---
+
 ## 2026-05-29 — PricingRule.crewOption added (Milestone 2)
 
 **Action**: Milestone 2 (Listings) backend implemented. During planning, a schema gap surfaced: `crew_option` pricing rules had no way to distinguish SKIPPERED vs CREWED fees. Added a nullable `crewOption` enum column to `PricingRule`.
