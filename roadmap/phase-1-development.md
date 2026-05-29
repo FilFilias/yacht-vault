@@ -8,7 +8,7 @@ last-updated: 2026-05-29
 
 # Phase 1 — Development Roadmap (MVP)
 
-> **Backend progress:** M1, M2, M3 backend ✅ complete (97 e2e + 15 unit tests green). Frontend and infrastructure not started. Next: M4 (Booking Core) backend.
+> **Backend progress:** M1, M2, M3, M4 backend ✅ complete (122 e2e + 15 unit tests green). Frontend and infrastructure not started. Next: M5 (Operations) backend.
 
 **Summary**: Build order for the YachtBay MVP — 7 milestones from project scaffolding to launch-ready. Each milestone produces a testable, shippable increment.
 
@@ -104,15 +104,15 @@ last-updated: 2026-05-29
 *Goal: Renter can instant-book a yacht and payment is processed*
 
 ### Backend
-- [ ] Stripe Connect module: `POST /stripe/connect/onboard`, `GET /stripe/connect/status`, `GET /stripe/connect/dashboard-link`
-- [ ] Stripe webhook handler: `account.updated` → updates `stripe_account_status` on user
-- [ ] Redis + BullMQ provisioned (payout queue only)
-- [ ] BullMQ worker: payout-queue (delayed job for owner payout release 24–48h after charter start)
-- [ ] Resend adapter wired up (`ResendAdapter` implementing `EmailPort`)
-- [ ] Bookings module: `POST /bookings` (CreateBookingCommand — `SELECT FOR UPDATE`, pricing, synchronous Stripe capture inside transaction, emailPort.send() post-commit)
-- [ ] Bookings module: `GET /bookings`, `GET /bookings/:id`
-- [ ] Stripe webhook handler: `payment_intent.payment_failed`, `account.updated`, `charge.refunded` (secondary path)
-- [ ] Confirmation emails: renter + owner (Resend templates, sent synchronously post-commit)
+- [x] Stripe Connect module: `POST /stripe/connect/onboard`, `GET /stripe/connect/status`, `GET /stripe/connect/dashboard-link`
+- [x] Stripe webhook handler: `account.updated` → updates `stripe_account_status` on user
+- [x] Redis + BullMQ provisioned (payout queue only) — lazy queue, no Redis required at boot
+- [x] BullMQ worker: payout-queue (separate `src/worker.ts` entrypoint; trigger wires up in M5 check-in)
+- [x] Resend adapter wired up (`ResendAdapter` implementing `EmailPort`) — also used for booking confirmation emails
+- [x] Bookings module: `POST /bookings` (CreateBookingHandler — Yacht-row `SELECT FOR UPDATE` + reserve + commit + **capture after commit**; client-side SCA; compensation on capture failure → 402; idempotency via `Idempotency-Key`) *(per amended `decisions/2026-05-27-sync-payment-capture`)*
+- [x] Bookings module: `GET /bookings`, `GET /bookings/:id`
+- [ ] Stripe webhook handler: `payment_intent.payment_failed`, `charge.refunded` (secondary path) — *deferred to M5*
+- [x] Confirmation emails: renter + owner (sent synchronously post-commit, best-effort)
 
 ### Frontend (Storefront)
 - [ ] `/yachts/:id/checkout` — booking summary page

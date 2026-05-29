@@ -14,7 +14,7 @@ last-updated: 2026-05-29
 
 ## Current Focus
 
-**Backend M1–M3 complete.** Auth + users (M1), yacht listings + photos + pricing config (M2), and discovery — pricing engine + availability + search (M3) — all built and tested (97 e2e + 15 unit green). Built with NestJS + Fastify + Prisma per Direction B. **Next: Milestone 4 (Booking Core)** — Stripe Connect, BullMQ payout-queue, bookings CQRS with synchronous capture. Frontend not started.
+**Backend M1–M4 complete.** M1 (auth/users), M2 (yacht listings + photos + pricing config), M3 (pricing engine + availability + search), M4a (Stripe Connect onboarding + webhook), M4b (bookings + payout). The full booking flow works end-to-end: search → client-side SCA authorize → `POST /bookings` (Yacht-row lock + reserve + commit + capture-after-commit) → confirmation emails → payout-queue ready to release at M5 check-in. **122 e2e + 15 unit green.** Built with NestJS + Fastify + Prisma per Direction B. **Next: Milestone 5 (Operations)** — cancellation/refunds, check-in/complete, `GET /payments`, wire `applyPrepDays`. Frontend not started.
 
 ## Recent Decisions (2026-05-27 — architecture simplification)
 
@@ -25,7 +25,7 @@ last-updated: 2026-05-29
 - Crew options: **Bareboat, skippered, fully crewed** — defined per yacht by owner
 - Charter types: **Day trips + multi-day/weekly**
 - Target customer: **Mid-range travelers** (primary)
-- Payments: **Stripe Connect Accounts v2** — destination charges, synchronous capture inside booking transaction, payout 24–48h after charter start
+- Payments: **Stripe Connect Accounts v2** — **separate charges + transfers** (platform captures, payout-queue transfers later); card **authorized client-side (SCA/3DS) → captured after commit**; payout released ~24–48h after check-in. *(Amended 2026-05-29 — see [[decisions/2026-05-27-sync-payment-capture]].)*
 - Geo search: **Lat/lng + haversine SQL** — PostGIS deferred to scale
 - Events: **Synchronous emails via EmailPort** — outbox table in schema, poller deferred
 - Queues: **payout-queue only** — Redis from Milestone 4, other queues deferred
@@ -54,5 +54,5 @@ last-updated: 2026-05-29
 
 ## Next Steps
 
-1. **Start Milestone 4 (Booking Core)** — Stripe Connect onboarding + webhooks, Redis + BullMQ payout-queue, Resend adapter (`EmailPort`), bookings module (`CreateBooking` CQRS command: `SELECT FOR UPDATE` + synchronous Stripe capture inside the transaction), wire `applyPrepDays` on confirmation
-2. **Frontend** (not started) — feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code (storefront search/detail can now consume the live M3 discovery API)
+1. **Start Milestone 5 (Operations)** — `PATCH /bookings/:id/cancel` (refund from `cancellationPolicySnapshot` + Stripe refund + availability release + dequeue any pending payout job), `PATCH /bookings/:id/check-in` (enqueues the `payout-queue` delayed job → wires up the M4 plumbing; also triggers `applyPrepDays` — the helper that's been sitting unwired since M3), `PATCH /bookings/:id/complete`, `GET /payments` (owner payout history), cancellation + completion emails. The webhook handler should also gain the secondary `payment_intent.*` / `transfer.created` routes.
+2. **Frontend** (not started) — the storefront can already consume the live discovery + booking APIs through `POST /bookings/payment-intent` → Stripe.js (SCA) → `POST /bookings`. Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code.

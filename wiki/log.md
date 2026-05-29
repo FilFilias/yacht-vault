@@ -11,6 +11,36 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-05-29 — Milestone 4 (Booking Core) backend implemented
+
+**Action**: Implemented M4 backend in two plans (4a + 4b), each subagent-driven TDD. Realizes the amended sync-capture ADR (client-side SCA → capture after commit; separate charges + transfers; Yacht-row lock + `UNIQUE(yachtId,date)` safety net).
+
+**Added (in the backend repo, not the vault):**
+
+*M4a — Payments Foundation & Stripe Connect:*
+- `PaymentPort` abstract (Connect + webhook surface) with a `StripeAdapter` (Express connected accounts, `transfers` capability)
+- `POST /stripe/connect/onboard`, `GET /stripe/connect/status`, `GET /stripe/connect/dashboard-link`
+- `POST /payments/webhook` — Fastify raw-body signature verification; `account.updated` → `User.stripeAccountStatus` (closes the loop on the M2 publish gate)
+- `FakePaymentAdapter` so the test suite stays Stripe-free
+
+*M4b — Bookings & Payout:*
+- Extended `PaymentPort` with PaymentIntent create/retrieve/capture/cancel + transfer; `FakePaymentAdapter` gained the PI lifecycle + `failNextCapture`; new `FakeEmailAdapter` records sent messages
+- `POST /bookings/payment-intent` — server-priced manual-capture PI for client-side SCA confirmation
+- `CreateBookingHandler` — `SELECT FOR UPDATE` on the **Yacht row** → re-validate availability → reserve dates (`UNIQUE(yachtId,date)` is the race guard → 409) → commit → **capture after commit**. Compensation on capture failure (CANCELLED + dates released + PI voided + 402). Idempotency via the `Idempotency-Key` header.
+- `GET /bookings` (renter + `?role=owner`) and `GET /bookings/:id` (contact details post-booking)
+- Confirmation emails (renter + owner) via `EmailPort` (Resend), best-effort post-commit
+- BullMQ payout-queue (**lazy** — Redis only on enqueue, which is M5), separate `src/worker.ts` entrypoint, `PayoutService.releasePayout()` transfer logic. `REDIS_URL` parsed into ioredis options so Railway's hosted Redis actually works.
+
+**Tests**: 122 e2e + 15 unit, all green. Includes a real-Postgres **concurrency test** (two parallel bookings for the same dates → exactly one 201, one 409).
+
+**Known loose ends carried to M5:** `applyPrepDays` is still not triggered on booking confirmation, and the secondary webhook events (`payment_intent.*` / `transfer.created`) are not routed yet.
+
+**Architecture realization:** CQRS for bookings is implemented as plain command-handler classes (`CreateBookingHandler`), NOT `@nestjs/cqrs` — Direction B preferring the lighter shape; the command/query separation is what matters.
+
+**Source**: M4 plans at `yachties-backend/docs/superpowers/plans/2026-05-29-milestone-4{a,b}-*.md`; design one-pager at `yachties-backend/docs/ideas/m4-booking-core.md`.
+
+---
+
 ## 2026-05-29 — M4 Booking Core stress-tested; sync-capture ADR + api-contract amended
 
 **Action**: Pre-implementation stress-test of the M4 booking + Stripe flow (idea-refine). Confirmed three design decisions and amended the affected specs/ADR before writing the plan.
