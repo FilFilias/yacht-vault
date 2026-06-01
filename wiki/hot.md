@@ -14,7 +14,7 @@ last-updated: 2026-06-01
 
 ## Current Focus
 
-**Backend M1–M6 complete.** Full charter lifecycle (book → check-in → complete → payout) plus cancellation (pre-transfer + snapshot-based refund) plus admin (list/suspend users, list/refund bookings — refund auto-clawbacks via Stripe `reverse_transfer` if payout already sent). All 6 milestones built with NestJS + Fastify + Prisma per Direction B. **153 e2e + 20 unit green.** **Next: Milestone 7 (Polish & Launch)** — backend hardening (rate limiting, Helmet, CORS for prod domains, audit existing tests), then operational launch (Railway env, domains, Stripe live keys, soft launch). Frontend not started.
+**Phase 1 backend ✅ COMPLETE (M1–M7).** Full marketplace works end-to-end: search → SCA authorize → book → check-in → complete → payout; cancel (pre-transfer, snapshot refund); admin (list/suspend/list-bookings/manual-refund with auto-clawback). Hardened: rate limiting (auth + booking writes 10/min/IP, global 100/min), Helmet headers, env-driven CORS, Stripe-signature verification audited. **156 e2e + 20 unit green.** All Direction B decisions respected throughout. **Two parallel tracks remain:** (a) **operational launch** — manual ops per `docs/launch-checklist.md` (Railway env, Stripe live, domains, soft launch); (b) **frontend** — storefront + owner panel + admin panel, not started.
 
 ## Recent Decisions (2026-05-27 — architecture simplification)
 
@@ -54,6 +54,6 @@ last-updated: 2026-06-01
 
 ## Next Steps
 
-1. **Start Milestone 7 (Polish & Launch)** — backend hardening only (ops/launch is manual): rate limiting via `@nestjs/throttler` (strict on auth, looser on reads), `helmet` security headers, CORS finalized for prod domains, a Stripe-webhook-signature sanity check, and any critical-path test gaps the audit surfaces (e.g., a `computeRefund`-via-policy-strategy unit if we extract one). M7 is mostly hardening, so the plan can be written directly without a separate stress-test.
-2. **Operational launch** (manual, not code) — set Railway env to live values, switch Stripe to live keys (`sk_live_`/`pk_live_`), point custom domains (`api.yachtbay.com`, `yachtbay.com`, `owners.yachtbay.com`), confirm R2 pre-signed URL expiry + CORS, soft-launch with friends-and-family, watch logs.
-3. **Frontend** (not started) — the storefront + owner panel can already consume the full live API. Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code.
+1. **Operational launch** (manual, per `yachties-backend/docs/launch-checklist.md`) — set Railway env to live values, switch Stripe to live keys (`sk_live_…` / `pk_live_…` + the live `whsec_…`), point custom domains (`api.yachtbay.com`, `yachtbay.com`, `owners.yachtbay.com`), configure R2 bucket CORS for the prod domains, wire monitoring (Railway logs + Stripe alerts), then soft-launch with friends-and-family.
+2. **Frontend** — start the parallel track. The backend API is fully ready (`POST /bookings/payment-intent` → Stripe.js SCA → `POST /bookings`; owner Connect onboarding; admin endpoints). Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code. Three apps per [[decisions/2026-05-03-frontend-monorepo]]: storefront (SSR), owner panel (SPA), admin panel (SPA).
+3. **Phase 2 (post-traction)** — see `roadmap/overview.md`: reviews/ratings, in-platform messaging, owner-defined cancellation policies, seasonal pricing UI, analytics, mobile apps.

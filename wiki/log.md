@@ -11,6 +11,41 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-06-01 — Milestone 7 (Polish & Launch — backend code) implemented; Phase 1 backend complete
+
+**Action**: Hardened the backend for production: rate limiting, security headers, audit pass, and a launch checklist. With this, **all 7 Phase-1 backend milestones are complete**. Remaining M7 work is operational (Railway env, domains, Stripe live keys, soft launch) and captured in the checklist.
+
+**Added (in the backend repo, not the vault):**
+
+*Rate limiting:*
+- Installed `@nestjs/throttler` (v6).
+- Global guard via `APP_GUARD` so the throttler runs BEFORE the JWT/Roles guards. Lenient default (100 req/min/IP) keeps M1–M6 traffic unaffected.
+- Strict 10 req/min/IP on `AuthController` (class-level) and on `POST /bookings/payment-intent` + `POST /bookings` (handler-level). Matches the api-contract's per-endpoint rate-limit notes.
+- In-memory storage at MVP (single Railway instance); flip to Redis-backed in `ThrottlerModule.forRoot` config alone when scaling out.
+- Test isolation: `db-reset` now also clears the throttler's in-memory map between tests (otherwise 28 booking tests × 2 logins each would blow the 10/min bucket).
+
+*Security headers:*
+- `@fastify/helmet` registered in `main.ts` with `contentSecurityPolicy: false` (the backend serves JSON only — frontends set their own CSP). HSTS, X-Content-Type-Options, X-Frame-Options all confirmed live in the boot smoke test.
+- **Pinned to `@fastify/helmet@^11`** for Fastify 4 compatibility — `@nestjs/platform-fastify` bundles Fastify 4.x, while helmet v12+ requires Fastify 5 and crashes prod boot with `FST_ERR_PLUGIN_VERSION_MISMATCH`. The e2e suite couldn't catch this because tests bypass `main.ts`; the boot smoke did.
+
+*Audit (no code change, all clean):*
+- CORS env-driven (`STOREFRONT_URL`/`OWNER_PANEL_URL`/`ADMIN_PANEL_URL`) with `credentials: true` — correct for httpOnly cookies.
+- Stripe webhook signature verification routes through `PaymentPort.constructWebhookEvent` → `stripe.webhooks.constructEvent(payload, signature, secret)` — invalid signature → 400.
+- R2 pre-signed URL default expiry 600s (10 minutes) — within threshold.
+
+*Launch artefact:*
+- `docs/launch-checklist.md` — operator's pre-flight: Railway env, Stripe live mode, custom domains, R2 bucket CORS, monitoring, pre-flight smoke flow, rollback plan.
+
+**Tests**: 156 e2e + 20 unit, all green. M7 added a small `throttler.e2e-spec.ts` (3 tests: global default tolerates normal traffic; 11th login = 429; 11th payment-intent = 429 — confirming the throttler runs BEFORE the JWT guard).
+
+**Architecture realization:** Direction B respected throughout — no Redis-backed throttler at MVP, no inflated DTOs, no premature CSP customisation, no Playwright (manual smoke in the checklist is the MVP-grade equivalent).
+
+**No spec/ADR amendments needed.**
+
+**Source**: M7 plan at `yachties-backend/docs/superpowers/plans/2026-06-01-milestone-7-polish-launch.md`; launch checklist at `yachties-backend/docs/launch-checklist.md`.
+
+---
+
 ## 2026-06-01 — Milestone 6 (Admin) backend implemented
 
 **Action**: Implemented M6 backend — the 4 admin endpoints from the minimal-admin ADR — via subagent-driven TDD. Plan written directly without a separate stress-test (M6 was small and well-specified).
