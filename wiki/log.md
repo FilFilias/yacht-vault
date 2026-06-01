@@ -11,6 +11,33 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-06-01 — Milestone 6 (Admin) backend implemented
+
+**Action**: Implemented M6 backend — the 4 admin endpoints from the minimal-admin ADR — via subagent-driven TDD. Plan written directly without a separate stress-test (M6 was small and well-specified).
+
+**Added (in the backend repo, not the vault):**
+
+*Foundations:*
+- `PaymentPort.createRefund` extended with optional `reverseTransfer?: boolean` — when set, Stripe passes `reverse_transfer: true` to claw funds back from the connected account. Backward-compatible (M5 cancellation path unchanged).
+- `prisma/seed-admin.ts` CLI — `npm run seed:admin -- <email>` promotes an existing user to `ADMIN` (idempotent on re-runs). No public admin registration.
+- `createAdminAndLogin` test helper.
+
+*Admin module (1 controller + 3 services + 4 DTOs):*
+- **`GET /admin/users`** — paginated; case-insensitive search across email/name; filters by `role` (Prisma `{ has }`) and `status`. `passwordHash` excluded.
+- **`PATCH /admin/users/:id/suspend`** — required `reason` (1–500 chars); sets `status=SUSPENDED` + `suspensionReason`.
+- **`GET /admin/bookings`** — all bookings paginated, optional `?status` filter; joins yacht + renter.
+- **`POST /admin/bookings/:id/refund`** — admin overrides the cancellation policy. Refundable-balance check (422 if `amountCents > deposit.amountCents - sum(prior REFUNDs)`). **Auto-clawback**: when `Payment.stripeTransferId` is set, passes `reverseTransfer: true` so Stripe reverses the connected-account transfer. Writes `REFUND` Payment + `ReservationEvent {eventType:'admin_refund_issued', adminId}` atomically. Response includes `ownerPayoutAlreadySent` warning.
+
+`@Roles(Role.ADMIN)` applied **at the controller class level** — the existing `RolesGuard` reads both handler-level and class-level metadata via `getAllAndOverride`, so non-admins get 403 before any handler runs.
+
+**Tests**: 153 e2e + 20 unit, all green. The admin refund e2e covers the no-clawback path, the auto-clawback path (asserts the fake's `refunds.at(-1).reverseTransfer === true`), the over-amount 422, and the non-admin 403.
+
+**No spec/ADR amendments needed** — M6 implements exactly the 4 endpoints scoped in [[decisions/2026-05-27-minimal-admin-mvp]].
+
+**Source**: M6 plan at `yachties-backend/docs/superpowers/plans/2026-06-01-milestone-6-admin.md`.
+
+---
+
 ## 2026-06-01 — Milestone 5 (Operations) backend implemented
 
 **Action**: Implemented M5 backend — booking state machine + payout history + secondary webhook events — via subagent-driven TDD. Closes the full charter lifecycle and clears the two known M4 loose ends.

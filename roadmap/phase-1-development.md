@@ -8,7 +8,7 @@ last-updated: 2026-06-01
 
 # Phase 1 — Development Roadmap (MVP)
 
-> **Backend progress:** M1–M5 backend ✅ complete (140 e2e + 20 unit tests green). Frontend and infrastructure not started. Next: M6 (Admin, 4 endpoints) backend.
+> **Backend progress:** M1–M6 backend ✅ complete (153 e2e + 20 unit tests green). Frontend and infrastructure not started. Next: M7 (Polish & Launch) — backend hardening + manual ops.
 
 **Summary**: Build order for the YachtBay MVP — 7 milestones from project scaffolding to launch-ready. Each milestone produces a testable, shippable increment.
 
@@ -163,11 +163,12 @@ last-updated: 2026-06-01
 *Goal: Admin panel operational, platform manageable without code deploys*
 
 ### Backend
-- [ ] Admin module: 4 MVP endpoints from [[specs/api-contract]] §8 (Phase 1)
-  - `GET /admin/users` — list/search users
-  - `PATCH /admin/users/:id/suspend` — emergency suspension
-  - `GET /admin/bookings` — list all bookings
-  - `POST /admin/bookings/:id/refund` — issue manual refund
+- [x] Admin module: 4 MVP endpoints from [[specs/api-contract]] §8 (Phase 1)
+  - [x] `GET /admin/users` — list/search users (search, role, status filters)
+  - [x] `PATCH /admin/users/:id/suspend` — emergency suspension (required reason)
+  - [x] `GET /admin/bookings` — list all bookings (status filter + pagination)
+  - [x] `POST /admin/bookings/:id/refund` — issue manual refund (auto-clawback via `reverse_transfer` when payout already sent; `ownerPayoutAlreadySent` warning flag)
+- [x] Admin user provisioning: `npm run seed:admin -- <email>` CLI (no public admin registration)
 
 ### Frontend (Admin Panel)
 - [ ] Admin panel: React Router 7 SPA initialized, sidebar layout

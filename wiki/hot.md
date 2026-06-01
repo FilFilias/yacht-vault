@@ -14,7 +14,7 @@ last-updated: 2026-06-01
 
 ## Current Focus
 
-**Backend M1–M5 complete.** The full charter lifecycle works end-to-end: search → client-side SCA authorize → `POST /bookings` (lock + reserve + commit + capture-after-commit) → check-in (enqueues payout) → complete → payout transferred. Cancellation (pre-transfer) refunds from the snapshotted policy and releases availability + PREP atomically. Owner payout history at `GET /payments`. Secondary webhooks for `transfer.created` + `payment_intent.payment_failed` are routed. **140 e2e + 20 unit green.** Built with NestJS + Fastify + Prisma per Direction B. **Next: Milestone 6 (Admin)** — 4 endpoints (list/suspend users, list bookings, manual refund). Frontend not started.
+**Backend M1–M6 complete.** Full charter lifecycle (book → check-in → complete → payout) plus cancellation (pre-transfer + snapshot-based refund) plus admin (list/suspend users, list/refund bookings — refund auto-clawbacks via Stripe `reverse_transfer` if payout already sent). All 6 milestones built with NestJS + Fastify + Prisma per Direction B. **153 e2e + 20 unit green.** **Next: Milestone 7 (Polish & Launch)** — backend hardening (rate limiting, Helmet, CORS for prod domains, audit existing tests), then operational launch (Railway env, domains, Stripe live keys, soft launch). Frontend not started.
 
 ## Recent Decisions (2026-05-27 — architecture simplification)
 
@@ -54,5 +54,6 @@ last-updated: 2026-06-01
 
 ## Next Steps
 
-1. **Start Milestone 6 (Admin)** — 4 endpoints, all `@Roles(Role.ADMIN)`: `GET /admin/users` (paginated list/search by name/email/role/status), `PATCH /admin/users/:id/suspend` (sets `status=SUSPENDED` + `suspensionReason`), `GET /admin/bookings` (paginated list with filters), `POST /admin/bookings/:id/refund` (admin-issued manual refund — bypasses the cancellation policy; warns `ownerPayoutAlreadySent: true` for post-transfer cases). Admin users seeded via a small CLI/script (no public registration). M6 is small and well-specified — the plan can be written directly without a separate stress-test.
-2. **Frontend** (not started) — the storefront can already consume the live discovery + booking APIs (`POST /bookings/payment-intent` → Stripe.js SCA → `POST /bookings`); the owner panel can consume the full charter lifecycle. Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code.
+1. **Start Milestone 7 (Polish & Launch)** — backend hardening only (ops/launch is manual): rate limiting via `@nestjs/throttler` (strict on auth, looser on reads), `helmet` security headers, CORS finalized for prod domains, a Stripe-webhook-signature sanity check, and any critical-path test gaps the audit surfaces (e.g., a `computeRefund`-via-policy-strategy unit if we extract one). M7 is mostly hardening, so the plan can be written directly without a separate stress-test.
+2. **Operational launch** (manual, not code) — set Railway env to live values, switch Stripe to live keys (`sk_live_`/`pk_live_`), point custom domains (`api.yachtbay.com`, `yachtbay.com`, `owners.yachtbay.com`), confirm R2 pre-signed URL expiry + CORS, soft-launch with friends-and-family, watch logs.
+3. **Frontend** (not started) — the storefront + owner panel can already consume the full live API. Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code.
