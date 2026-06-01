@@ -2,7 +2,7 @@
 title: Hot — Session Context Cache
 tags:
   - meta
-last-updated: 2026-05-29
+last-updated: 2026-06-01
 ---
 
 # Hot — Session Context Cache
@@ -14,7 +14,7 @@ last-updated: 2026-05-29
 
 ## Current Focus
 
-**Backend M1–M4 complete.** M1 (auth/users), M2 (yacht listings + photos + pricing config), M3 (pricing engine + availability + search), M4a (Stripe Connect onboarding + webhook), M4b (bookings + payout). The full booking flow works end-to-end: search → client-side SCA authorize → `POST /bookings` (Yacht-row lock + reserve + commit + capture-after-commit) → confirmation emails → payout-queue ready to release at M5 check-in. **122 e2e + 15 unit green.** Built with NestJS + Fastify + Prisma per Direction B. **Next: Milestone 5 (Operations)** — cancellation/refunds, check-in/complete, `GET /payments`, wire `applyPrepDays`. Frontend not started.
+**Backend M1–M5 complete.** The full charter lifecycle works end-to-end: search → client-side SCA authorize → `POST /bookings` (lock + reserve + commit + capture-after-commit) → check-in (enqueues payout) → complete → payout transferred. Cancellation (pre-transfer) refunds from the snapshotted policy and releases availability + PREP atomically. Owner payout history at `GET /payments`. Secondary webhooks for `transfer.created` + `payment_intent.payment_failed` are routed. **140 e2e + 20 unit green.** Built with NestJS + Fastify + Prisma per Direction B. **Next: Milestone 6 (Admin)** — 4 endpoints (list/suspend users, list bookings, manual refund). Frontend not started.
 
 ## Recent Decisions (2026-05-27 — architecture simplification)
 
@@ -54,5 +54,5 @@ last-updated: 2026-05-29
 
 ## Next Steps
 
-1. **Start Milestone 5 (Operations)** — `PATCH /bookings/:id/cancel` (refund from `cancellationPolicySnapshot` + Stripe refund + availability release + dequeue any pending payout job), `PATCH /bookings/:id/check-in` (enqueues the `payout-queue` delayed job → wires up the M4 plumbing; also triggers `applyPrepDays` — the helper that's been sitting unwired since M3), `PATCH /bookings/:id/complete`, `GET /payments` (owner payout history), cancellation + completion emails. The webhook handler should also gain the secondary `payment_intent.*` / `transfer.created` routes.
-2. **Frontend** (not started) — the storefront can already consume the live discovery + booking APIs through `POST /bookings/payment-intent` → Stripe.js (SCA) → `POST /bookings`. Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code.
+1. **Start Milestone 6 (Admin)** — 4 endpoints, all `@Roles(Role.ADMIN)`: `GET /admin/users` (paginated list/search by name/email/role/status), `PATCH /admin/users/:id/suspend` (sets `status=SUSPENDED` + `suspensionReason`), `GET /admin/bookings` (paginated list with filters), `POST /admin/bookings/:id/refund` (admin-issued manual refund — bypasses the cancellation policy; warns `ownerPayoutAlreadySent: true` for post-transfer cases). Admin users seeded via a small CLI/script (no public registration). M6 is small and well-specified — the plan can be written directly without a separate stress-test.
+2. **Frontend** (not started) — the storefront can already consume the live discovery + booking APIs (`POST /bookings/payment-intent` → Stripe.js SCA → `POST /bookings`); the owner panel can consume the full charter lifecycle. Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code.

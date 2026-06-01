@@ -3,12 +3,12 @@ title: Phase 1 — Development Roadmap
 tags:
   - roadmap
   - development
-last-updated: 2026-05-29
+last-updated: 2026-06-01
 ---
 
 # Phase 1 — Development Roadmap (MVP)
 
-> **Backend progress:** M1, M2, M3, M4 backend ✅ complete (122 e2e + 15 unit tests green). Frontend and infrastructure not started. Next: M5 (Operations) backend.
+> **Backend progress:** M1–M5 backend ✅ complete (140 e2e + 20 unit tests green). Frontend and infrastructure not started. Next: M6 (Admin, 4 endpoints) backend.
 
 **Summary**: Build order for the YachtBay MVP — 7 milestones from project scaffolding to launch-ready. Each milestone produces a testable, shippable increment.
 
@@ -134,12 +134,13 @@ last-updated: 2026-05-29
 *Goal: Full charter lifecycle, cancellations, payouts, and both dashboards working*
 
 ### Backend
-- [ ] Bookings module: `PATCH /bookings/:id/cancel` — refund calculation + Stripe refund + availability release
-- [ ] Bookings module: `PATCH /bookings/:id/check-in`, `PATCH /bookings/:id/complete`
-- [ ] Payments module: `GET /payments` (owner payout history)
-- [ ] Check-in handler enqueues payout-queue delayed job (set up in M4 — no new infrastructure)
-- [ ] Cancellation emails: renter + owner via emailPort.send() (synchronous post-commit)
-- [ ] Completion emails: owner + renter via emailPort.send() (synchronous post-commit)
+- [x] Bookings module: `PATCH /bookings/:id/cancel` — `CancelBookingHandler` with pre-transfer guard, version-locked transition, refund from `cancellationPolicySnapshot` (idempotency-keyed to version), availability + PREP released, payout dequeued
+- [x] Bookings module: `PATCH /bookings/:id/check-in`, `PATCH /bookings/:id/complete` (version-locked, date guards)
+- [x] Payments module: `GET /payments` (owner payout history + `totalEarnedCents`/`thisMonthCents` summary)
+- [x] Check-in handler enqueues payout-queue delayed job (`PAYOUT_DELAY_HOURS` env, default 24)
+- [x] Cancellation emails: renter + owner via `emailPort.send()` (best-effort post-commit)
+- [x] Completion emails: owner + renter via `emailPort.send()` (best-effort post-commit)
+- [x] M4 backfill: `applyPrepDays(yachtId, checkOut, reservationId)` fires on confirmation; secondary webhooks (`transfer.created`, `payment_intent.payment_failed`) wired idempotently
 
 ### Frontend (Storefront)
 - [ ] `/bookings` — renter bookings dashboard (Upcoming / Past / Cancelled tabs)

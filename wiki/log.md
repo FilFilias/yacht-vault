@@ -11,6 +11,39 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-06-01 — Milestone 5 (Operations) backend implemented
+
+**Action**: Implemented M5 backend — booking state machine + payout history + secondary webhook events — via subagent-driven TDD. Closes the full charter lifecycle and clears the two known M4 loose ends.
+
+**Added (in the backend repo, not the vault):**
+
+*Booking state machine (three new plain command-handler classes per Direction B):*
+- **`CancelBookingHandler`** — `PATCH /bookings/:id/cancel` (renter or owner). Pre-transfer guard (if `Payment.stripeTransferId` is set → 409, defer to M6 admin clawback). Refund computed from the **snapshotted policy** (`dayTrip` tier when charter length = 1, else `multiDay`; commission non-refundable). Stripe refund **idempotency-keyed to `(reservationId, version)`** so concurrent retries dedupe at Stripe. Version-locked `CONFIRMED → CANCELLED`. `deleteMany WHERE reservationId` releases RESERVED + PREP atomically. Post-commit: `payoutQueue.removeRelease(id)` + cancellation emails.
+- **`CheckInBookingHandler`** — `PATCH /bookings/:id/check-in` (owner-only). Version-locked `CONFIRMED → CHECKED_IN`; enqueues the payout job with `PAYOUT_DELAY_HOURS * 3600_000` (env-defaulted to 24) — wires up the M4 plumbing.
+- **`CompleteBookingHandler`** — `PATCH /bookings/:id/complete` (owner-only). Version-locked `CHECKED_IN → COMPLETED` + completion emails.
+
+*Supporting infra:*
+- `PaymentPort.createRefund` (StripeAdapter + FakePaymentAdapter).
+- `PayoutQueue.removeRelease(reservationId)` — best-effort, no-ops if the lazy queue hasn't been instantiated (keeps tests Redis-free).
+- `applyPrepDays(yachtId, checkOut, reservationId?)` — backfilled with `reservationId`; `CreateBookingHandler` calls it post-capture so PREP rows are tagged and cancellation releases them in one go (closes the first M4 loose end).
+- `computeRefund` pure helper (5 unit tests).
+- Cancellation + completion email templates.
+- `PAYOUT_DELAY_HOURS` Joi env (default 24).
+
+*Operations endpoints:*
+- **`GET /payments`** — owner's CAPTURED `DEPOSIT` payments + summary (`totalEarnedCents`, `thisMonthCents` UTC).
+- **Webhook handlers added** — `transfer.created` sets `Payment.stripeTransferId` (idempotent on `stripeTransferId: null`); `payment_intent.payment_failed` flips `PENDING → FAILED` (idempotent on status). Closes the second M4 loose end.
+
+**Tests**: 140 e2e + 20 unit, all green. The `computeRefund` helper has 5 unit tests covering both tier paths. `CancelBookingHandler` e2e covers: 50%-refund math from the snapshot, RESERVED+PREP released, pre-transfer 409, non-`CONFIRMED` 409, owner-cancel, stranger 404, refund + email + dequeue side-effects.
+
+**Architecture realization:** every state transition uses optimistic concurrency via `prisma.reservation.updateMany({ where: { id, version }, data: { version: { increment: 1 }, status } })` → count 0 → 409. No `@nestjs/cqrs`; plain handler classes throughout.
+
+**No spec/ADR amendments needed** — M5 lived entirely within Direction B's locked decisions.
+
+**Source**: M5 plan at `yachties-backend/docs/superpowers/plans/2026-05-29-milestone-5-operations.md`; design one-pager at `yachties-backend/docs/ideas/m5-operations.md`.
+
+---
+
 ## 2026-05-29 — Milestone 4 (Booking Core) backend implemented
 
 **Action**: Implemented M4 backend in two plans (4a + 4b), each subagent-driven TDD. Realizes the amended sync-capture ADR (client-side SCA → capture after commit; separate charges + transfers; Yacht-row lock + `UNIQUE(yachtId,date)` safety net).
