@@ -2,7 +2,7 @@
 title: Hot — Session Context Cache
 tags:
   - meta
-last-updated: 2026-06-01
+last-updated: 2026-06-03
 ---
 
 # Hot — Session Context Cache
@@ -14,7 +14,11 @@ last-updated: 2026-06-01
 
 ## Current Focus
 
-**Phase 1 backend ✅ COMPLETE (M1–M7).** Full marketplace works end-to-end: search → SCA authorize → book → check-in → complete → payout; cancel (pre-transfer, snapshot refund); admin (list/suspend/list-bookings/manual-refund with auto-clawback). Hardened: rate limiting (auth + booking writes 10/min/IP, global 100/min), Helmet headers, env-driven CORS, Stripe-signature verification audited. **156 e2e + 20 unit green.** All Direction B decisions respected throughout. **Two parallel tracks remain:** (a) **operational launch** — manual ops per `docs/launch-checklist.md` (Railway env, Stripe live, domains, soft launch); (b) **frontend** — storefront + owner panel + admin panel, not started.
+**Phase 1 backend ✅ COMPLETE (M1–M7).** Full marketplace works end-to-end: search → SCA authorize → book → check-in → complete → payout; cancel (pre-transfer, snapshot refund); admin (list/suspend/list-bookings/manual-refund with auto-clawback). Hardened: rate limiting (auth + booking writes 10/min/IP, global 100/min), Helmet headers, env-driven CORS, Stripe-signature verification audited. **156 e2e + 20 unit green.** All Direction B decisions respected throughout.
+
+**Next move — full-stack monorepo migration** ([[decisions/2026-06-03-full-stack-monorepo]], supersedes the 2026-05-03 frontend-monorepo ADR). The standalone `yachties-backend` becomes `yachtbay/apps/api/`. Two frontend shells get scaffolded alongside: `apps/storefront/` (RR7 SSR — public consumer site) and `apps/panel/` (RR7 SPA — owners + admins via role-gated routes). Shared `packages/types/` re-exports backend Prisma + DTO types directly (no codegen). Then build the admin section of `apps/panel/` first (smallest scope, 4 endpoints, validates the monorepo shape), then owner views, then storefront.
+
+**Operational launch** (Railway live env, Stripe live keys, domains, soft launch per `yachties-backend/docs/launch-checklist.md`) remains a parallel manual track — can happen any time the API is wanted in production.
 
 ## Recent Decisions (2026-05-27 — architecture simplification)
 
@@ -54,6 +58,9 @@ last-updated: 2026-06-01
 
 ## Next Steps
 
-1. **Operational launch** (manual, per `yachties-backend/docs/launch-checklist.md`) — set Railway env to live values, switch Stripe to live keys (`sk_live_…` / `pk_live_…` + the live `whsec_…`), point custom domains (`api.yachtbay.com`, `yachtbay.com`, `owners.yachtbay.com`), configure R2 bucket CORS for the prod domains, wire monitoring (Railway logs + Stripe alerts), then soft-launch with friends-and-family.
-2. **Frontend** — start the parallel track. The backend API is fully ready (`POST /bookings/payment-intent` → Stripe.js SCA → `POST /bookings`; owner Connect onboarding; admin endpoints). Feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code. Three apps per [[decisions/2026-05-03-frontend-monorepo]]: storefront (SSR), owner panel (SPA), admin panel (SPA).
-3. **Phase 2 (post-traction)** — see `roadmap/overview.md`: reviews/ratings, in-platform messaging, owner-defined cancellation policies, seasonal pricing UI, analytics, mobile apps.
+1. **Monorepo migration** — see plan at `yachties-backend/docs/superpowers/plans/2026-06-03-monorepo-migration.md`. Create `/Users/philipposphilias/Desktop/Yacht Platfrom/yachtbay/`, scaffold pnpm workspaces + Turborepo, move backend into `apps/api/`, scaffold empty `apps/storefront/` and `apps/panel/` shells, scaffold `packages/types/` and `packages/api-client/`, retest the backend suite in its new home, archive `yachties-backend/`, reconfigure Railway service paths.
+2. **Admin section of `apps/panel/`** — 4 screens against the existing 4 admin endpoints. Smallest scope; validates monorepo shape end-to-end before tackling owner views or storefront.
+3. **Owner section of `apps/panel/`** — yacht management, calendar, payouts, Stripe Connect onboarding.
+4. **Storefront** — feed [[specs/design/stitch-brief]] into Google Stitch, then connect the Stitch MCP to Claude Code to generate React Router 7 SSR code (listings, search, detail, checkout via `POST /bookings/payment-intent` → Stripe.js SCA → `POST /bookings`).
+5. **Operational launch** (manual, per `yachties-backend/docs/launch-checklist.md` — moves into the monorepo as `apps/api/docs/launch-checklist.md`): Railway live env, Stripe live keys, custom domains (`api.yachtbay.com`, `yachtbay.com`, `owners.yachtbay.com`), R2 bucket CORS, monitoring, soft-launch. Can run in parallel with the frontend track as soon as the API is wanted in production.
+6. **Phase 2 (post-traction)** — see `roadmap/overview.md`: reviews/ratings, in-platform messaging, owner-defined cancellation policies, seasonal pricing UI, analytics, mobile apps.

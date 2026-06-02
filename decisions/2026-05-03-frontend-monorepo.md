@@ -1,12 +1,18 @@
 ---
 title: Separate frontend apps in a monorepo — storefront + owner panel
 date: 2026-05-03
-status: accepted
+status: superseded
+superseded-by: 2026-06-03-full-stack-monorepo
+superseded-on: 2026-06-03
 tags:
   - decision
   - frontend
   - architecture
+  - superseded
 ---
+
+> [!warning] Superseded on 2026-06-03
+> This ADR has been superseded by [[decisions/2026-06-03-full-stack-monorepo]]. The frontend monorepo decision survived, but it now lives inside a **full-stack monorepo** that also includes the backend (`apps/api/`). Additionally, the admin panel is **not** a separate app — owner and admin are role-gated routes inside a single `apps/panel/` SPA. See the superseding ADR for the full reasoning. The content below is preserved for historical context.
 
 # Separate Frontend Apps in a Monorepo
 

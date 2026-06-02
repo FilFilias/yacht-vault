@@ -2,12 +2,43 @@
 title: Wiki Log
 tags:
   - meta
-last-updated: 2026-05-01
+last-updated: 2026-06-03
 ---
 
 # Wiki Log
 
 Append-only record of all vault operations. Never delete or edit past entries.
+
+---
+
+## 2026-06-03 — Full-stack monorepo decision; `yachties-backend` to be archived
+
+**Action**: Switched the post-Phase-1 trajectory from "two separate frontend apps + standalone backend repo" to a **single full-stack monorepo** at `/Users/philipposphilias/Desktop/Yacht Platfrom/yachtbay/`. This is a substantial supersedure of the 2026-05-03 frontend-monorepo ADR, driven by two findings from this session:
+
+1. **Owner panel and admin panel do not need to be separate apps.** The 2026-05-03 ADR's "fundamentally different UX goals" argument was about storefront (consumer, SSR, SEO) vs owner-panel (operational, SPA, behind auth). It does NOT extend to owner vs admin — both are auth-gated, data-dense SPAs with the same rendering mode, auth flow, and design language. Splitting them duplicates layout, nav, and design system code with no UX payoff. Inside a single `apps/panel/`, RR7 route-level role gates (`@Roles(OWNER)` vs `@Roles(ADMIN)`) plus route-level code splitting give the same isolation a separate app would, without the duplication.
+
+2. **Backend-in-monorepo enables direct cross-workspace TypeScript imports.** With backend living in `apps/api/`, `packages/types/` becomes a trivial re-export of Prisma model types and DTOs. A field rename on the backend instantly breaks `tsc` in every frontend file that uses the old name — same PR, same CI run. The three alternatives (private-npm publish ritual, OpenAPI codegen, hand-mirrored types) are all strictly worse, and the type-drift tax compounds weekly for a solo dev iterating both halves.
+
+**Decisions locked:**
+- Repo name: **yachtbay**
+- Path: **/Users/philipposphilias/Desktop/Yacht Platfrom/yachtbay/**
+- Git history: **archive `yachties-backend` (final tag, read-only) and start the monorepo with a clean initial commit** — preserves Phase 1's documented record in the vault, avoids `git subtree`/`filter-branch` surgery for a solo-project marginal benefit.
+- Workspaces: `apps/api/`, `apps/storefront/`, `apps/panel/`, `packages/types/`, `packages/api-client/`. **No** `packages/ui/` or `packages/utils/` upfront — YAGNI.
+- Railway: three services, each with its own root directory and watch-path config.
+
+**Added in vault:**
+- `decisions/2026-06-03-full-stack-monorepo.md` — new ADR (this decision).
+- `decisions/2026-05-03-frontend-monorepo.md` — marked **superseded** with a callout pointing at the new ADR; original body preserved for history.
+- `wiki/hot.md` — Current Focus and Next Steps rewritten: monorepo migration is #1, admin section of panel #2, owner section #3, storefront #4, operational launch parallel.
+
+**Amended in the backend repo:**
+- `yachties-backend/CLAUDE.md` — archive notice at the top pointing at the monorepo path and the new ADR; "Next track" line corrected (panel app covers owner + admin, not three separate apps).
+
+**Migration plan**: written to `yachties-backend/docs/superpowers/plans/2026-06-03-monorepo-migration.md` (will be carried into the monorepo as `apps/api/docs/superpowers/plans/...` during the migration itself, then archived in the standalone backend repo).
+
+**No backend code changed.** The 156 e2e + 20 unit tests must pass unchanged in their new home — that is the acceptance gate for the migration.
+
+**Source**: this session's conversation; full-stack-monorepo ADR.
 
 ---
 
