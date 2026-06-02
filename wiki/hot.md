@@ -14,11 +14,13 @@ last-updated: 2026-06-03
 
 ## Current Focus
 
-**Phase 1 backend ✅ COMPLETE (M1–M7).** Full marketplace works end-to-end: search → SCA authorize → book → check-in → complete → payout; cancel (pre-transfer, snapshot refund); admin (list/suspend/list-bookings/manual-refund with auto-clawback). Hardened: rate limiting (auth + booking writes 10/min/IP, global 100/min), Helmet headers, env-driven CORS, Stripe-signature verification audited. **156 e2e + 20 unit green.** All Direction B decisions respected throughout.
+**Phase 1 backend ✅ COMPLETE (M1–M7).** Full marketplace works end-to-end. **156 e2e + 20 unit green.** All Direction B decisions respected throughout.
 
-**Next move — full-stack monorepo migration** ([[decisions/2026-06-03-full-stack-monorepo]], supersedes the 2026-05-03 frontend-monorepo ADR). The standalone `yachties-backend` becomes `yachtbay/apps/api/`. Two frontend shells get scaffolded alongside: `apps/storefront/` (RR7 SSR — public consumer site) and `apps/panel/` (RR7 SPA — owners + admins via role-gated routes). Shared `packages/types/` re-exports backend Prisma + DTO types directly (no codegen). Then build the admin section of `apps/panel/` first (smallest scope, 4 endpoints, validates the monorepo shape), then owner views, then storefront.
+**Full-stack monorepo migration ✅ COMPLETE (2026-06-03).** Backend moved into `yachtbay/apps/api/` at `/Users/philipposphilias/Desktop/Yacht Platfrom/yachtbay/`. Five workspaces wired with pnpm + Turborepo: `@yachtbay/api`, `@yachtbay/storefront` (RR7 SSR shell), `@yachtbay/panel` (RR7 SPA shell), `@yachtbay/types` (Prisma + DTO re-exports), `@yachtbay/api-client` (typed fetch wrapper). Clean-room verification: clean install + full build + 156 e2e + 20 unit, all green in the new home. Root + per-app CLAUDE.md updated. See [[decisions/2026-06-03-full-stack-monorepo]].
 
-**Operational launch** (Railway live env, Stripe live keys, domains, soft launch per `yachties-backend/docs/launch-checklist.md`) remains a parallel manual track — can happen any time the API is wanted in production.
+**Next implementation track — admin section of `apps/panel/`** (smallest scope, 4 endpoints, 4-5 screens). Validates the monorepo end-to-end before tackling owner views or the SSR storefront. After that: owner section of `apps/panel/`, then `apps/storefront/`.
+
+**Operational launch** (Railway live env, Stripe live keys, domains, soft launch per `yachtbay/apps/api/docs/launch-checklist.md`) remains a parallel manual track — can happen any time the API is wanted in production. **Operator follow-up from the migration:** Railway service paths point at `apps/api/` (root dir + watch paths); archive `yachties-backend/` repo with a final tag; ensure CI installs from monorepo root.
 
 ## Recent Decisions (2026-05-27 — architecture simplification)
 

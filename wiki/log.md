@@ -11,6 +11,57 @@ Append-only record of all vault operations. Never delete or edit past entries.
 
 ---
 
+## 2026-06-03 — Full-stack monorepo migration ✅ COMPLETE
+
+**Action**: Executed the full-stack-monorepo migration via subagent-driven development. 10 tasks (skeleton → backend move → test verification → packages → frontend shells → turbo orchestration → root CLAUDE.md → final gate) all green in a single session. The standalone `yachties-backend/` is now ready to be archived; all future development lives in `/Users/philipposphilias/Desktop/Yacht Platfrom/yachtbay/`.
+
+**Monorepo layout (final):**
+```
+yachtbay/
+├── apps/api/         @yachtbay/api — backend, 156 e2e + 20 unit passing
+├── apps/storefront/  @yachtbay/storefront — RR7 SSR shell (smoke import of Yacht from @yachtbay/types)
+├── apps/panel/       @yachtbay/panel — RR7 SPA shell (ssr:false confirmed in build log), index + /admin placeholder
+├── packages/types/   @yachtbay/types — re-exports Prisma model/enum types from @prisma/client; DTOs via tsconfig paths into apps/api/src
+└── packages/api-client/ @yachtbay/api-client — typed fetch wrapper with credentials:include + ApiError
+```
+
+**Tooling locked-in:**
+- pnpm 9.15.0 (pinned via `packageManager` + corepack)
+- Turborepo 2.x (cold build 5.4s; warm cache "FULL TURBO" in 34ms)
+- Node 20 (`.nvmrc`)
+- TypeScript 5 with monorepo-base config; `apps/api/tsconfig.json` overrides `module: commonjs`, `moduleResolution: node`, `noImplicitOverride: false`, `noUncheckedIndexedAccess: false` for NestJS compatibility
+
+**Cross-stack type bridge proven:**
+- `packages/types/src/index.ts` re-exports Prisma model/enum types directly from `@prisma/client` (added as a `@yachtbay/types` direct dep — pnpm dedups via virtual store).
+- DTO types resolved via tsconfig `paths` mapping `"@yachtbay/api/*": ["../../apps/api/src/*"]` — direct source-file imports, no codegen, no publish step.
+- Frontend smoke imports (`import type { Yacht } from '@yachtbay/types'` in storefront; `import type { Role }` in panel) typecheck and build cleanly.
+
+**Acceptance gate cleared:**
+- Clean install (`pnpm install --frozen-lockfile`): success — lockfile already in sync, no drift.
+- Full build (3 build tasks: api, storefront, panel; types and api-client have no build script): all green in 5.4s.
+- Unit tests: 20/20 passing (0.81s).
+- E2e tests: 156/156 passing across 12 suites (34.6s) — same exact suite that was green in the standalone repo. No feature code changed, no test code changed.
+
+**Vault updated:**
+- `decisions/2026-06-03-full-stack-monorepo.md` (the ADR locking this) — already written before the migration started.
+- `decisions/2026-05-03-frontend-monorepo.md` — marked superseded.
+- `wiki/hot.md` — Current Focus rewritten to mark migration complete; next track is the admin section of `apps/panel/`.
+
+**Architecture refinement from execution:**
+- The plan's suggested route for Prisma type imports (`@yachtbay/api/node_modules/@prisma/client`) was wrong — pnpm doesn't nest @prisma/client under apps/api/node_modules; it lives in the virtual store. The cleaner solution (`@prisma/client` as a direct dep of @yachtbay/types) was adopted instead.
+- The `noUncheckedIndexedAccess: false` override on `apps/api/tsconfig.json` is a minor pre-existing condition (backend code wasn't written against this strictness). Tracked as future tech debt.
+
+**Operator-only follow-up** (not agent-executable):
+- Archive `yachties-backend/` with a final git tag `v1.0-archived`.
+- Retarget the auto-push background process at `yachtbay/.git/`.
+- Create the GitHub remote for the new monorepo (`gh repo create yachtbay --private --source=. --remote=origin --push`).
+- Reconfigure Railway: three services, each with root dir + watch paths (`apps/api/**`, `apps/storefront/**`, `apps/panel/**` + shared `packages/**`).
+- Update `apps/api/docs/launch-checklist.md` for the new paths.
+
+**Source**: migration plan at `apps/api/docs/superpowers/plans/2026-06-03-monorepo-migration.md` (which traveled with the backend during Task 2 of the migration). 7 commits in the monorepo: `4890a47`, `e0fc72e`, `5e69634`, `1fb8f80`, `272be84`, `378cf4e`, `3c339a5`.
+
+---
+
 ## 2026-06-03 — Full-stack monorepo decision; `yachties-backend` to be archived
 
 **Action**: Switched the post-Phase-1 trajectory from "two separate frontend apps + standalone backend repo" to a **single full-stack monorepo** at `/Users/philipposphilias/Desktop/Yacht Platfrom/yachtbay/`. This is a substantial supersedure of the 2026-05-03 frontend-monorepo ADR, driven by two findings from this session:
